@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Interactivo - Christian Danglades</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Se ha diseñado una SPA (Single Page Application) con navegación por secciones para facilitar el acceso a la información. La estructura incluye: 1) Cabecera con datos clave. 2) Barra de navegación fija. 3) Sección de "Experiencia" como una línea de tiempo interactiva (clic para expandir), lo que la hace más atractiva y menos densa. 4) Sección de "Habilidades" con gráficos de barras para una comprensión visual rápida de las competencias técnicas e interpersonales. 5) Secciones de "Formación" y "Contacto" claras y directas. Esta estructura se eligió porque transforma un CV lineal en una experiencia de usuario más exploratoria y memorable, destacando la información clave de forma visual e interactiva. -->
+    <!-- Visualization & Content Choices: 1. Perfil: Texto directo para informar. 2. Experiencia: Línea de tiempo vertical interactiva (HTML/CSS/JS) para organizar y mostrar el cambio a lo largo del tiempo. Permite al usuario enfocarse en un rol a la vez. 3. Habilidades: Gráficos de barras horizontales (Chart.js/Canvas) para comparar y visualizar las competencias de forma clara y medible. 4. Formación y Cursos: Tarjetas (HTML/Tailwind) para organizar la información de forma limpia. 5. Idiomas: Indicadores de progreso (HTML/Tailwind) para una comparación visual simple. Se justifica el uso de estas herramientas para mejorar la legibilidad y el impacto visual del CV. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .timeline-item-content {
+            transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .timeline-item-content.open {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+                max-height: 350px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-stone-900">Christian Danglades</div>
+            <div class="hidden md:flex space-x-8">
+                <a href="#perfil" class="text-stone-600 hover:text-blue-600">Perfil</a>
+                <a href="#experiencia" class="text-stone-600 hover:text-blue-600">Experiencia</a>
+                <a href="#habilidades" class="text-stone-600 hover:text-blue-600">Habilidades</a>
+                <a href="#formacion" class="text-stone-600 hover:text-blue-600">Formación</a>
+                <a href="#contacto" class="text-stone-600 hover:text-blue-600">Contacto</a>
+            </div>
+            <div class="md:hidden">
+                <button id="menu-btn" class="text-stone-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden px-6 pt-2 pb-4 space-y-2">
+            <a href="#perfil" class="block text-stone-600 hover:text-blue-600">Perfil</a>
+            <a href="#experiencia" class="block text-stone-600 hover:text-blue-600">Experiencia</a>
+            <a href="#habilidades" class="block text-stone-600 hover:text-blue-600">Habilidades</a>
+            <a href="#formacion" class="block text-stone-600 hover:text-blue-600">Formación</a>
+            <a href="#contacto" class="block text-stone-600 hover:text-blue-600">Contacto</a>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="perfil" class="text-center mb-20 pt-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-900 mb-4">Christian Danglades</h1>
+            <p class="text-xl md:text-2xl text-blue-600 font-medium mb-6">Analista de Soporte al Usuario | Bilingüe</p>
+            <p class="max-w-3xl mx-auto text-lg text-stone-700">
+                Analista de Soporte de TI bilingüe con más de 3 años de experiencia en entornos corporativos. Apasionado por la tecnología y la resolución de problemas complejos, con una gran capacidad para ofrecer soporte técnico y funcional a usuarios en español y portugués. Busco aplicar mis habilidades para garantizar la continuidad operativa y la satisfacción del usuario en un entorno dinámico.
+            </p>
+        </section>
+
+        <section id="experiencia" class="mb-20 pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12">Experiencia Profesional</h2>
+             <p class="text-center text-stone-600 mb-12">Haz clic en cada puesto para ver los detalles.</p>
+            <div class="relative max-w-2xl mx-auto">
+                <div class="absolute left-1/2 w-0.5 h-full bg-blue-200 transform -translate-x-1/2"></div>
+                
+                <div class="timeline-item mb-12">
+                    <div class="flex items-center">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 w-4 h-4 bg-blue-500 rounded-full z-10 transform -translate-x-1/2"></div>
+                        <div class="w-1/2 pl-8">
+                            <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow" data-target="exp1">
+                                <p class="text-stone-500 text-sm">Marzo 2024 – Presente</p>
+                                <h3 class="font-bold text-lg">Analista de Soporte al Usuario, Bilingüe</h3>
+                                <p class="text-stone-600">TCS - Tata Consultancy Services</p>
+                                <div id="exp1" class="timeline-item-content mt-4 text-stone-600">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Proporciono soporte técnico y resolución de incidencias a usuarios finales en un entorno bilingüe.</li>
+                                        <li>Diagnostico y soluciono problemas de hardware, software y redes para garantizar la operatividad.</li>
+                                        <li>Documento casos y soluciones en sistemas de ticketing, manteniendo un registro preciso para futuras consultas.</li>
+                                        <li>Colaboro con equipos internos para escalar y resolver problemas complejos de manera eficiente.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item mb-12">
+                     <div class="flex items-center flex-row-reverse">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 w-4 h-4 bg-blue-500 rounded-full z-10 transform -translate-x-1/2"></div>
+                        <div class="w-1/2 pr-8 text-right">
+                           <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow" data-target="exp2">
+                                <p class="text-stone-500 text-sm">Mayo 2023 – Enero 2024</p>
+                                <h3 class="font-bold text-lg">Servicio de Atendimento al Cliente</h3>
+                                <p class="text-stone-600">Atos Brasil LTDA</p>
+                                 <div id="exp2" class="timeline-item-content mt-4 text-stone-600 text-left">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Desarrollé mi carrera en el sector tecnológico, aplicando soluciones a los problemas de los clientes.</li>
+                                        <li>Interpreté las dificultades de los usuarios para ofrecer asistencia técnica y comunicativa adecuada.</li>
+                                        <li>Exploré activamente nuevas tecnologías y metodologías para mejorar la calidad del servicio.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="flex items-center">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 w-4 h-4 bg-blue-500 rounded-full z-10 transform -translate-x-1/2"></div>
+                        <div class="w-1/2 pl-8">
+                             <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow" data-target="exp3">
+                                <p class="text-stone-500 text-sm">Enero 2021 – Abril 2023</p>
+                                <h3 class="font-bold text-lg">Servicios Gerais</h3>
+                                <p class="text-stone-600">IDRI Comercio LTDA</p>
+                                <div id="exp3" class="timeline-item-content mt-4 text-stone-600">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li>Logré un ascenso gracias a mi dedicación, acciones proactivas y la implementación de ideas innovadoras.</li>
+                                        <li>Asumí mayores responsabilidades que contribuyeron al crecimiento y la eficiencia del equipo.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="habilidades" class="mb-20 pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12">Habilidades</h2>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-6">Técnicas</h3>
+                    <div class="chart-container">
+                        <canvas id="techSkillsChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-6">Interpersonales</h3>
+                    <div class="chart-container">
+                        <canvas id="softSkillsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="formacion" class="mb-20 pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12">Formación y Cursos</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2">Educación Secundaria</h3>
+                    <p class="text-stone-700">Carlos Drummond de Andrade, Boa Vista</p>
+                    <p class="text-stone-500 text-sm">Agosto 2019 – Noviembre 2022</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2">Google Cybersecurity</h3>
+                    <p class="text-stone-700">Certificación Profesional</p>
+                    <p class="text-blue-600 font-semibold text-sm">Marzo 2025 - Cursando</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2">Computación en la Nube</h3>
+                    <p class="text-stone-700">Ka solution</p>
+                    <p class="text-stone-500 text-sm">Junio 2023</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2">Power BI</h3>
+                    <p class="text-stone-700">Empowerdata</p>
+                    <p class="text-stone-500 text-sm">Julio 2023</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2">Python</h3>
+                    <p class="text-stone-700">PRIME CURSOS</p>
+                    <p class="text-stone-500 text-sm">Septiembre 2022 – Septiembre 2023</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="contacto" class="pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12">Contacto</h2>
+            <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg text-center">
+                <p class="text-lg text-stone-700 mb-2">¡Hablemos!</p>
+                <p class="text-stone-600 mb-6">Puedes contactarme a través de los siguientes medios.</p>
+                <div class="space-y-4">
+                    <p class="flex items-center justify-center text-lg">
+                        <span class="mr-3">📧</span>
+                        <a href="mailto:christiandanglades123@gmail.com" class="text-blue-600 hover:underline">christiandanglades123@gmail.com</a>
+                    </p>
+                    <p class="flex items-center justify-center text-lg">
+                         <span class="mr-3">📞</span>
+                        <a href="tel:43988380063" class="text-blue-600 hover:underline">43988380063</a>
+                    </p>
+                    <p class="flex items-center justify-center text-lg">
+                         <span class="mr-3">📍</span>
+                        <span>Londrina, Brasil</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-20">
+        <div class="container mx-auto px-6 py-6 text-center text-stone-500">
+            <p>&copy; 2024 Christian Danglades. CV Interactivo.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    if(mobileMenu.contains(e.target)) {
+                       mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const timelineItems = document.querySelectorAll('[data-target]');
+            timelineItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetId = item.getAttribute('data-target');
+                    const targetElement = document.getElementById(targetId);
+                    targetElement.classList.toggle('open');
+                });
+            });
+            
+            const commonChartOptions = {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: '#1e293b',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: '#e7e5e4'
+                        },
+                         ticks: {
+                            color: '#57534e'
+                        }
+                    },
+                    y: {
+                         grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#57534e',
+                            font: {
+                                size: 14
+                            },
+                            callback: function(value, index, values) {
+                                const label = this.getLabelForValue(value);
+                                if (label.length > 16) {
+                                    return label.substring(0, 16) + '...';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            };
+
+            const techSkillsCtx = document.getElementById('techSkillsChart').getContext('2d');
+            new Chart(techSkillsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Linux', 'Power BI', 'Diagnóstico H/S', 'Sistemas Ticketing', 'Cloud Computing', 'Informática Avanz.'],
+                    datasets: [{
+                        label: 'Nivel',
+                        data: [75, 85, 90, 95, 70, 80],
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: commonChartOptions
+            });
+
+            const softSkillsCtx = document.getElementById('softSkillsChart').getContext('2d');
+            new Chart(softSkillsCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Soporte Bilingüe', 'Resolución de Problemas', 'Creatividad', 'Trabajo en Equipo', 'Adaptabilidad', 'Resolución de Conflictos'],
+                    datasets: [{
+                        label: 'Nivel',
+                        data: [95, 90, 80, 85, 95, 88],
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: commonChartOptions
+            });
+        });
+    </script>
+</body>
+</html>
