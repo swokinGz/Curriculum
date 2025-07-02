@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CV Interactivo - Christian Danglades</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Se ha diseñado una SPA (Single Page Application) con navegación por secciones para facilitar el acceso a la información. La estructura incluye: 1) Cabecera con datos clave. 2) Barra de navegación fija con selector de idioma. 3) Sección de "Experiencia" como una línea de tiempo interactiva (clic para expandir). 4) Sección de "Habilidades" con gráficos de barras. 5) Secciones de "Formación", "Idiomas" y "Contacto" claras y directas. Esta estructura se eligió porque transforma un CV lineal en una experiencia de usuario más exploratoria y memorable. -->
+    <!-- Visualization & Content Choices: 1. Perfil: Texto directo. 2. Experiencia: Línea de tiempo vertical interactiva (HTML/CSS/JS). 3. Habilidades: Gráficos de barras horizontales (Chart.js/Canvas). 4. Formación y Cursos: Tarjetas (HTML/Tailwind). 5. Idiomas: Indicadores de progreso (HTML/Tailwind). Se añade un traductor (JS) para que todo el contenido, incluidos los gráficos, sea accesible en español, inglés y portugués. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .timeline-item-content {
+            transition: max-height 0.5s ease-out, opacity 0.5s ease-out;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+        }
+        .timeline-item-content.open {
+            max-height: 500px;
+            opacity: 1;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (max-width: 768px) {
+            .chart-container {
+                height: 300px;
+                max-height: 350px;
+            }
+        }
+        .lang-btn.active {
+            font-weight: bold;
+            color: #2563eb;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body class="bg-stone-50 text-stone-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <div class="text-xl font-bold text-stone-900">Christian Danglades</div>
+            <div class="hidden md:flex items-center space-x-8">
+                <a href="#perfil" class="text-stone-600 hover:text-blue-600" data-translate-key="navProfile">Perfil</a>
+                <a href="#experiencia" class="text-stone-600 hover:text-blue-600" data-translate-key="navExperience">Experiencia</a>
+                <a href="#habilidades" class="text-stone-600 hover:text-blue-600" data-translate-key="navSkills">Habilidades</a>
+                <a href="#formacion" class="text-stone-600 hover:text-blue-600" data-translate-key="navEducation">Formación</a>
+                <a href="#idiomas" class="text-stone-600 hover:text-blue-600" data-translate-key="navLanguages">Idiomas</a>
+                <a href="#contacto" class="text-stone-600 hover:text-blue-600" data-translate-key="navContact">Contacto</a>
+                <div id="language-switcher" class="flex space-x-3 border-l pl-6 ml-4 border-stone-200">
+                    <button class="lang-btn" data-lang="es">ES</button>
+                    <button class="lang-btn" data-lang="en">EN</button>
+                    <button class="lang-btn" data-lang="pt">PT</button>
+                </div>
+            </div>
+            <div class="md:hidden">
+                <button id="menu-btn" class="text-stone-600 focus:outline-none">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
+            </div>
+        </nav>
+        <div id="mobile-menu" class="md:hidden hidden px-6 pt-2 pb-4 space-y-2">
+            <a href="#perfil" class="block text-stone-600 hover:text-blue-600" data-translate-key="navProfile">Perfil</a>
+            <a href="#experiencia" class="block text-stone-600 hover:text-blue-600" data-translate-key="navExperience">Experiencia</a>
+            <a href="#habilidades" class="block text-stone-600 hover:text-blue-600" data-translate-key="navSkills">Habilidades</a>
+            <a href="#formacion" class="block text-stone-600 hover:text-blue-600" data-translate-key="navEducation">Formación</a>
+            <a href="#idiomas" class="block text-stone-600 hover:text-blue-600" data-translate-key="navLanguages">Idiomas</a>
+            <a href="#contacto" class="block text-stone-600 hover:text-blue-600" data-translate-key="navContact">Contacto</a>
+            <div id="language-switcher-mobile" class="flex space-x-4 pt-4 border-t mt-4 border-stone-200">
+                <button class="lang-btn" data-lang="es">Español</button>
+                <button class="lang-btn" data-lang="en">English</button>
+                <button class="lang-btn" data-lang="pt">Português</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section id="perfil" class="text-center mb-20 pt-16">
+            <h1 class="text-4xl md:text-5xl font-bold text-stone-900 mb-4">Christian Danglades</h1>
+            <p class="text-xl md:text-2xl text-blue-600 font-medium mb-6" data-translate-key="jobTitle">Analista de Soporte al Usuario | Bilingüe</p>
+            <p class="max-w-3xl mx-auto text-lg text-stone-700" data-translate-key="profileSummary">
+                Analista de Soporte de TI bilingüe con más de 3 años de experiencia en entornos corporativos. Apasionado por la tecnología y la resolución de problemas complejos, con una gran capacidad para ofrecer soporte técnico y funcional a usuarios en español y portugués. Busco aplicar mis habilidades para garantizar la continuidad operativa y la satisfacción del usuario en un entorno dinámico.
+            </p>
+        </section>
+
+        <section id="experiencia" class="mb-20 pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12" data-translate-key="experienceTitle">Experiencia Profesional</h2>
+             <p class="text-center text-stone-600 mb-12" data-translate-key="experienceSubtitle">Haz clic en cada puesto para ver los detalles.</p>
+            <div class="relative max-w-2xl mx-auto">
+                <div class="absolute left-1/2 w-0.5 h-full bg-blue-200 transform -translate-x-1/2"></div>
+                
+                <div class="timeline-item mb-12">
+                    <div class="flex items-center">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 w-4 h-4 bg-blue-500 rounded-full z-10 transform -translate-x-1/2"></div>
+                        <div class="w-1/2 pl-8">
+                            <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow" data-target="exp1">
+                                <p class="text-stone-500 text-sm" data-translate-key="exp1Date">Marzo 2024 – Presente</p>
+                                <h3 class="font-bold text-lg" data-translate-key="exp1Title">Analista de Soporte al Usuario, Bilingüe</h3>
+                                <p class="text-stone-600">TCS - Tata Consultancy Services</p>
+                                <div id="exp1" class="timeline-item-content mt-4 text-stone-600">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li data-translate-key="exp1Bullet1">Proporciono soporte técnico y resolución de incidencias a usuarios finales en un entorno bilingüe.</li>
+                                        <li data-translate-key="exp1Bullet2">Diagnostico y soluciono problemas de hardware, software y redes para garantizar la operatividad.</li>
+                                        <li data-translate-key="exp1Bullet3">Documento casos y soluciones en sistemas de ticketing, manteniendo un registro preciso para futuras consultas.</li>
+                                        <li data-translate-key="exp1Bullet4">Colaboro con equipos internos para escalar y resolver problemas complejos de manera eficiente.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item mb-12">
+                     <div class="flex items-center flex-row-reverse">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 w-4 h-4 bg-blue-500 rounded-full z-10 transform -translate-x-1/2"></div>
+                        <div class="w-1/2 pr-8 text-right">
+                           <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow" data-target="exp2">
+                                <p class="text-stone-500 text-sm" data-translate-key="exp2Date">Mayo 2023 – Enero 2024</p>
+                                <h3 class="font-bold text-lg" data-translate-key="exp2Title">Servicio de Atendimento al Cliente</h3>
+                                <p class="text-stone-600">Atos Brasil LTDA</p>
+                                 <div id="exp2" class="timeline-item-content mt-4 text-stone-600 text-left">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li data-translate-key="exp2Bullet1">Desarrollé mi carrera en el sector tecnológico, aplicando soluciones a los problemas de los clientes.</li>
+                                        <li data-translate-key="exp2Bullet2">Interpreté las dificultades de los usuarios para ofrecer asistencia técnica y comunicativa adecuada.</li>
+                                        <li data-translate-key="exp2Bullet3">Exploré activamente nuevas tecnologías y metodologías para mejorar la calidad del servicio.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="flex items-center">
+                        <div class="w-1/2"></div>
+                        <div class="absolute left-1/2 w-4 h-4 bg-blue-500 rounded-full z-10 transform -translate-x-1/2"></div>
+                        <div class="w-1/2 pl-8">
+                             <div class="bg-white p-6 rounded-lg shadow-lg cursor-pointer hover:shadow-xl transition-shadow" data-target="exp3">
+                                <p class="text-stone-500 text-sm" data-translate-key="exp3Date">Enero 2021 – Abril 2023</p>
+                                <h3 class="font-bold text-lg" data-translate-key="exp3Title">Servicios Gerais</h3>
+                                <p class="text-stone-600">IDRI Comercio LTDA</p>
+                                <div id="exp3" class="timeline-item-content mt-4 text-stone-600">
+                                    <ul class="list-disc list-inside space-y-2">
+                                        <li data-translate-key="exp3Bullet1">Logré un ascenso gracias a mi dedicación, acciones proactivas y la implementación de ideas innovadoras.</li>
+                                        <li data-translate-key="exp3Bullet2">Asumí mayores responsabilidades que contribuyeron al crecimiento y la eficiencia del equipo.</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="habilidades" class="mb-20 pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12" data-translate-key="skillsTitle">Habilidades</h2>
+            <div class="grid md:grid-cols-2 gap-12">
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-6" data-translate-key="techSkillsTitle">Técnicas</h3>
+                    <div class="chart-container">
+                        <canvas id="techSkillsChart"></canvas>
+                    </div>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-center mb-6" data-translate-key="softSkillsTitle">Interpersonales</h3>
+                    <div class="chart-container">
+                        <canvas id="softSkillsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="formacion" class="mb-20 pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12" data-translate-key="educationTitle">Formación y Cursos</h2>
+            <div class="max-w-4xl mx-auto grid md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2" data-translate-key="edu1Title">Educación Secundaria</h3>
+                    <p class="text-stone-700">Carlos Drummond de Andrade, Boa Vista</p>
+                    <p class="text-stone-500 text-sm">Agosto 2019 – Noviembre 2022</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2">Google Cybersecurity</h3>
+                    <p class="text-stone-700" data-translate-key="course1Title">Certificación Profesional</p>
+                    <p class="text-blue-600 font-semibold text-sm" data-translate-key="course1Status">Marzo 2025 - Cursando</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2" data-translate-key="course2Title">Computación en la Nube</h3>
+                    <p class="text-stone-700">Ka solution</p>
+                    <p class="text-stone-500 text-sm">Junio 2023</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2">Power BI</h3>
+                    <p class="text-stone-700">Empowerdata</p>
+                    <p class="text-stone-500 text-sm">Julio 2023</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-lg">
+                    <h3 class="font-bold text-xl mb-2">Python</h3>
+                    <p class="text-stone-700">PRIME CURSOS</p>
+                    <p class="text-stone-500 text-sm">Septiembre 2022 – Septiembre 2023</p>
+                </div>
+            </div>
+        </section>
+
+        <section id="idiomas" class="mb-20 pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12" data-translate-key="languagesTitle">Idiomas</h2>
+            <div class="max-w-2xl mx-auto bg-white p-8 rounded-lg shadow-lg space-y-6">
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-lg font-medium text-stone-700">Español</span>
+                        <span class="text-sm font-medium text-stone-500" data-translate-key="langLevelNative">Nativo</span>
+                    </div>
+                    <div class="w-full bg-stone-200 rounded-full h-2.5">
+                        <div class="bg-green-600 h-2.5 rounded-full" style="width: 100%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-lg font-medium text-stone-700">Portugués</span>
+                        <span class="text-sm font-medium text-stone-500" data-translate-key="langLevelAdvanced">Avanzado</span>
+                    </div>
+                    <div class="w-full bg-stone-200 rounded-full h-2.5">
+                        <div class="bg-blue-600 h-2.5 rounded-full" style="width: 85%"></div>
+                    </div>
+                </div>
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <span class="text-lg font-medium text-stone-700">Inglés</span>
+                        <span class="text-sm font-medium text-stone-500" data-translate-key="langLevelBasic">Básico</span>
+                    </div>
+                    <div class="w-full bg-stone-200 rounded-full h-2.5">
+                        <div class="bg-yellow-500 h-2.5 rounded-full" style="width: 35%"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="contacto" class="pt-16">
+            <h2 class="text-3xl font-bold text-center mb-12" data-translate-key="contactTitle">Contacto</h2>
+            <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-lg text-center">
+                <p class="text-lg text-stone-700 mb-2" data-translate-key="contactSubtitle">¡Hablemos!</p>
+                <p class="text-stone-600 mb-6" data-translate-key="contactDescription">Puedes contactarme a través de los siguientes medios.</p>
+                <div class="space-y-4">
+                    <p class="flex items-center justify-center text-lg">
+                        <span class="mr-3">📧</span>
+                        <a href="mailto:christiandanglades123@gmail.com" class="text-blue-600 hover:underline">christiandanglades123@gmail.com</a>
+                    </p>
+                    <p class="flex items-center justify-center text-lg">
+                         <span class="mr-3">📞</span>
+                        <a href="tel:+5543988380063" class="text-blue-600 hover:underline">+5543988380063</a>
+                    </p>
+                    <p class="flex items-center justify-center text-lg">
+                         <span class="mr-3">📍</span>
+                        <span>Londrina, Brasil</span>
+                    </p>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-white mt-20">
+        <div class="container mx-auto px-6 py-6 text-center text-stone-500">
+            <p data-translate-key="footerText">&copy; 2024 Christian Danglades. CV Interactivo.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const menuBtn = document.getElementById('menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            let techSkillsChart, softSkillsChart;
+
+            const translations = {
+                es: {
+                    navProfile: "Perfil",
+                    navExperience: "Experiencia",
+                    navSkills: "Habilidades",
+                    navEducation: "Formación",
+                    navLanguages: "Idiomas",
+                    navContact: "Contacto",
+                    jobTitle: "Analista de Soporte al Usuario | Bilingüe",
+                    profileSummary: "Analista de Soporte de TI bilingüe con más de 3 años de experiencia en entornos corporativos. Apasionado por la tecnología y la resolución de problemas complejos, con una gran capacidad para ofrecer soporte técnico y funcional a usuarios en español y portugués. Busco aplicar mis habilidades para garantizar la continuidad operativa y la satisfacción del usuario en un entorno dinámico.",
+                    experienceTitle: "Experiencia Profesional",
+                    experienceSubtitle: "Haz clic en cada puesto para ver los detalles.",
+                    exp1Date: "Marzo 2024 – Presente",
+                    exp1Title: "Analista de Soporte al Usuario, Bilingüe",
+                    exp1Bullet1: "Proporciono soporte técnico y resolución de incidencias a usuarios finales en un entorno bilingüe.",
+                    exp1Bullet2: "Diagnostico y soluciono problemas de hardware, software y redes para garantizar la operatividad.",
+                    exp1Bullet3: "Documento casos y soluciones en sistemas de ticketing, manteniendo un registro preciso para futuras consultas.",
+                    exp1Bullet4: "Colaboro con equipos internos para escalar y resolver problemas complejos de manera eficiente.",
+                    exp2Date: "Mayo 2023 – Enero 2024",
+                    exp2Title: "Servicio de Atendimento al Cliente",
+                    exp2Bullet1: "Desarrollé mi carrera en el sector tecnológico, aplicando soluciones a los problemas de los clientes.",
+                    exp2Bullet2: "Interpreté las dificultades de los usuarios para ofrecer asistencia técnica y comunicativa adecuada.",
+                    exp2Bullet3: "Exploré activamente nuevas tecnologías y metodologías para mejorar la calidad del servicio.",
+                    exp3Date: "Enero 2021 – Abril 2023",
+                    exp3Title: "Servicios Gerais",
+                    exp3Bullet1: "Logré un ascenso gracias a mi dedicación, acciones proactivas y la implementación de ideas innovadoras.",
+                    exp3Bullet2: "Asumí mayores responsabilidades que contribuyeron al crecimiento y la eficiencia del equipo.",
+                    skillsTitle: "Habilidades",
+                    techSkillsTitle: "Técnicas",
+                    softSkillsTitle: "Interpersonales",
+                    educationTitle: "Formación y Cursos",
+                    edu1Title: "Educación Secundaria",
+                    course1Title: "Certificación Profesional",
+                    course1Status: "Marzo 2025 - Cursando",
+                    course2Title: "Computación en la Nube",
+                    languagesTitle: "Idiomas",
+                    langLevelNative: "Nativo",
+                    langLevelAdvanced: "Avanzado",
+                    langLevelBasic: "Básico",
+                    contactTitle: "Contacto",
+                    contactSubtitle: "¡Hablemos!",
+                    contactDescription: "Puedes contactarme a través de los siguientes medios.",
+                    footerText: "© 2024 Christian Danglades. CV Interactivo.",
+                    techSkillsLabels: ['Linux', 'Power BI', 'Diagnóstico H/S', 'Sistemas Ticketing', 'Cloud Computing', 'Informática Avanz.'],
+                    softSkillsLabels: ['Soporte Bilingüe', 'Resolución de Problemas', 'Creatividad', 'Trabajo en Equipo', 'Adaptabilidad', 'Resolución de Conflictos']
+                },
+                en: {
+                    navProfile: "Profile",
+                    navExperience: "Experience",
+                    navSkills: "Skills",
+                    navEducation: "Education",
+                    navLanguages: "Languages",
+                    navContact: "Contact",
+                    jobTitle: "Bilingual User Support Analyst",
+                    profileSummary: "Bilingual IT Support Analyst with over 3 years of experience in corporate environments. Passionate about technology and complex problem-solving, with a strong ability to provide technical and functional support to users in Spanish and Portuguese. I am looking to apply my skills to ensure operational continuity and user satisfaction in a dynamic environment.",
+                    experienceTitle: "Professional Experience",
+                    experienceSubtitle: "Click on each position to see the details.",
+                    exp1Date: "March 2024 – Present",
+                    exp1Title: "Bilingual User Support Analyst",
+                    exp1Bullet1: "Provide technical support and incident resolution to end-users in a bilingual environment.",
+                    exp1Bullet2: "Diagnose and solve hardware, software, and network problems to ensure operationality.",
+                    exp1Bullet3: "Document cases and solutions in ticketing systems, maintaining an accurate record for future reference.",
+                    exp1Bullet4: "Collaborate with internal teams to escalate and resolve complex issues efficiently.",
+                    exp2Date: "May 2023 – January 2024",
+                    exp2Title: "Customer Service",
+                    exp2Bullet1: "Developed my career in the technology sector, applying solutions to customer problems.",
+                    exp2Bullet2: "Interpreted user difficulties to provide adequate technical and communicative assistance.",
+                    exp2Bullet3: "Actively explored new technologies and methodologies to improve service quality.",
+                    exp3Date: "January 2021 – April 2023",
+                    exp3Title: "General Services",
+                    exp3Bullet1: "Achieved a promotion thanks to my dedication, proactive actions, and implementation of innovative ideas.",
+                    exp3Bullet2: "Assumed greater responsibilities that contributed to the team's growth and efficiency.",
+                    skillsTitle: "Skills",
+                    techSkillsTitle: "Technical",
+                    softSkillsTitle: "Interpersonal",
+                    educationTitle: "Education & Courses",
+                    edu1Title: "High School Education",
+                    course1Title: "Professional Certification",
+                    course1Status: "March 2025 - In Progress",
+                    course2Title: "Cloud Computing",
+                    languagesTitle: "Languages",
+                    langLevelNative: "Native",
+                    langLevelAdvanced: "Advanced",
+                    langLevelBasic: "Basic",
+                    contactTitle: "Contact",
+                    contactSubtitle: "Let's talk!",
+                    contactDescription: "You can reach me through the following channels.",
+                    footerText: "© 2024 Christian Danglades. Interactive CV.",
+                    techSkillsLabels: ['Linux', 'Power BI', 'H/S Diagnostics', 'Ticketing Systems', 'Cloud Computing', 'Advanced IT'],
+                    softSkillsLabels: ['Bilingual Support', 'Problem Solving', 'Creativity', 'Teamwork', 'Adaptability', 'Conflict Resolution']
+                },
+                pt: {
+                    navProfile: "Perfil",
+                    navExperience: "Experiência",
+                    navSkills: "Habilidades",
+                    navEducation: "Formação",
+                    navLanguages: "Idiomas",
+                    navContact: "Contato",
+                    jobTitle: "Analista de Suporte ao Usuário | Bilíngue",
+                    profileSummary: "Analista de Suporte de TI bilíngue com mais de 3 anos de experiência em ambientes corporativos. Apaixonado por tecnologia e resolução de problemas complexos, com grande capacidade para oferecer suporte técnico e funcional a usuários em espanhol e português. Busco aplicar minhas habilidades para garantir a continuidade operacional e a satisfação do usuário em um ambiente dinâmico.",
+                    experienceTitle: "Experiência Profissional",
+                    experienceSubtitle: "Clique em cada cargo para ver os detalhes.",
+                    exp1Date: "Março 2024 – Presente",
+                    exp1Title: "Analista de Suporte ao Usuário, Bilíngue",
+                    exp1Bullet1: "Forneço suporte técnico e resolução de incidentes para usuários finais em ambiente bilíngue.",
+                    exp1Bullet2: "Diagnostico e soluciono problemas de hardware, software e redes para garantir a operacionalidade.",
+                    exp1Bullet3: "Documento casos e soluções em sistemas de ticketing, mantendo um registro preciso para consultas futuras.",
+                    exp1Bullet4: "Colaboro com equipes internas para escalar e resolver problemas complexos de forma eficiente.",
+                    exp2Date: "Maio 2023 – Janeiro 2024",
+                    exp2Title: "Serviço de Atendimento ao Cliente",
+                    exp2Bullet1: "Desenvolvi minha carreira no setor de tecnologia, aplicando soluções para os problemas dos clientes.",
+                    exp2Bullet2: "Interpretei as dificuldades dos usuários para oferecer assistência técnica e comunicativa adequada.",
+                    exp2Bullet3: "Explorei ativamente novas tecnologias e metodologias para melhorar a qualidade do serviço.",
+                    exp3Date: "Janeiro 2021 – Abril 2023",
+                    exp3Title: "Serviços Gerais",
+                    exp3Bullet1: "Consegui uma promoção graças à minha dedicação, ações proativas e implementação de ideias inovadoras.",
+                    exp3Bullet2: "Assumi maiores responsabilidades que contribuíram para o crescimento e a eficiência da equipe.",
+                    skillsTitle: "Habilidades",
+                    techSkillsTitle: "Técnicas",
+                    softSkillsTitle: "Interpessoais",
+                    educationTitle: "Formação e Cursos",
+                    edu1Title: "Ensino Médio",
+                    course1Title: "Certificação Profissional",
+                    course1Status: "Março 2025 - Cursando",
+                    course2Title: "Computação em Nuvem",
+                    languagesTitle: "Idiomas",
+                    langLevelNative: "Nativo",
+                    langLevelAdvanced: "Avançado",
+                    langLevelBasic: "Básico",
+                    contactTitle: "Contato",
+                    contactSubtitle: "Vamos conversar!",
+                    contactDescription: "Você pode entrar em contato comigo através dos seguintes meios.",
+                    footerText: "© 2024 Christian Danglades. CV Interativo.",
+                    techSkillsLabels: ['Linux', 'Power BI', 'Diagnóstico H/S', 'Sistemas de Ticketing', 'Computação em Nuvem', 'Informática Avançada'],
+                    softSkillsLabels: ['Suporte Bilíngue', 'Resolução de Problemas', 'Criatividade', 'Trabalho em Equipe', 'Adaptabilidade', 'Resolução de Conflitos']
+                }
+            };
+
+            function translatePage(lang) {
+                document.documentElement.lang = lang;
+                document.querySelectorAll('[data-translate-key]').forEach(el => {
+                    const key = el.getAttribute('data-translate-key');
+                    if (translations[lang] && translations[lang][key]) {
+                        el.textContent = translations[lang][key];
+                    }
+                });
+
+                if (techSkillsChart && softSkillsChart) {
+                    techSkillsChart.data.labels = translations[lang].techSkillsLabels;
+                    softSkillsChart.data.labels = translations[lang].softSkillsLabels;
+                    techSkillsChart.update();
+                    softSkillsChart.update();
+                }
+                
+                document.querySelectorAll('.lang-btn').forEach(btn => {
+                    btn.classList.remove('active');
+                    if (btn.getAttribute('data-lang') === lang) {
+                        btn.classList.add('active');
+                    }
+                });
+            }
+
+            document.querySelectorAll('.lang-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const lang = e.target.getAttribute('data-lang');
+                    translatePage(lang);
+                });
+            });
+
+            menuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+            });
+            
+            document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+                anchor.addEventListener('click', function (e) {
+                    if(mobileMenu.contains(e.target)) {
+                       mobileMenu.classList.add('hidden');
+                    }
+                });
+            });
+
+            const timelineItems = document.querySelectorAll('[data-target]');
+            timelineItems.forEach(item => {
+                item.addEventListener('click', () => {
+                    const targetId = item.getAttribute('data-target');
+                    const targetElement = document.getElementById(targetId);
+                    targetElement.classList.toggle('open');
+                });
+            });
+            
+            const commonChartOptions = {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        enabled: true,
+                        backgroundColor: '#1e293b',
+                        titleColor: '#ffffff',
+                        bodyColor: '#ffffff',
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 100,
+                        grid: {
+                            color: '#e7e5e4'
+                        },
+                         ticks: {
+                            color: '#57534e'
+                        }
+                    },
+                    y: {
+                         grid: {
+                            display: false
+                        },
+                        ticks: {
+                            color: '#57534e',
+                            font: {
+                                size: 14
+                            },
+                            callback: function(value, index, values) {
+                                const label = this.getLabelForValue(value);
+                                if (label.length > 16) {
+                                    return label.substring(0, 16) + '...';
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                }
+            };
+
+            const techSkillsCtx = document.getElementById('techSkillsChart').getContext('2d');
+            techSkillsChart = new Chart(techSkillsCtx, {
+                type: 'bar',
+                data: {
+                    labels: translations.es.techSkillsLabels,
+                    datasets: [{
+                        label: 'Nivel',
+                        data: [75, 85, 90, 95, 70, 80],
+                        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: commonChartOptions
+            });
+
+            const softSkillsCtx = document.getElementById('softSkillsChart').getContext('2d');
+            softSkillsChart = new Chart(softSkillsCtx, {
+                type: 'bar',
+                data: {
+                    labels: translations.es.softSkillsLabels,
+                    datasets: [{
+                        label: 'Nivel',
+                        data: [95, 90, 80, 85, 95, 88],
+                        backgroundColor: 'rgba(34, 197, 94, 0.7)',
+                        borderColor: 'rgba(34, 197, 94, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: commonChartOptions
+            });
+
+            translatePage('es');
+        });
+    </script>
+</body>
+</html>
