@@ -1,0 +1,1575 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title id="appTitle">Control Financiero Personal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        // Tailwind CSS configuration for dark mode
+        tailwind.config = {
+            darkMode: 'class', // Enable dark mode based on the 'dark' class on the HTML tag
+            theme: {
+                extend: {
+                    fontFamily: {
+                        inter: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+    <style>
+        /* Custom scrollbar for transaction list */
+        .overflow-y-auto::-webkit-scrollbar {
+            width: 8px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        /* Dark mode scrollbar styles */
+        html.dark .overflow-y-auto::-webkit-scrollbar-track {
+            background: #333;
+        }
+        html.dark .overflow-y-auto::-webkit-scrollbar-thumb {
+            background: #666;
+        }
+        html.dark .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+            background: #888;
+        }
+
+        /* Basic modal styles for overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+            max-width: 90%;
+            width: 500px;
+        }
+
+        /* Dark mode for modal content */
+        html.dark .modal-content {
+            background-color: #2d3748; /* bg-gray-800 equivalent */
+            color: #e2e8f0; /* text-gray-200 equivalent */
+        }
+        html.dark .modal-content label {
+            color: #a0aec0; /* text-gray-400 equivalent */
+        }
+        html.dark .modal-content input,
+        html.dark .modal-content select {
+            background-color: #4a5568; /* bg-gray-700 equivalent */
+            border-color: #4a5568;
+            color: #e2e8f0;
+        }
+        html.dark .modal-content input::placeholder {
+            color: #a0aec0;
+        }
+        html.dark .modal-content button.bg-gray-300 {
+            background-color: #64748b; /* slate-600 */
+            color: #f8fafc; /* slate-50 */
+        }
+    </style>
+</head>
+<body class="font-inter bg-gray-100 dark:bg-gray-900 flex items-center justify-center min-h-screen p-4 transition-colors duration-300">
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-xl p-8 w-full max-w-4xl border border-gray-200 dark:border-gray-700 transition-colors duration-300">
+        <div class="flex flex-col sm:flex-row justify-between items-center mb-8">
+            <h1 id="mainTitle" class="text-3xl font-extrabold text-center sm:text-left text-gray-800 dark:text-gray-100 mb-4 sm:mb-0">Control Financiero Personal</h1>
+            <div class="flex items-center space-x-4">
+                <select id="languageSelect" class="p-2 rounded-md bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300">
+                    <option value="es">Español</option>
+                    <option value="en">English</option>
+                </select>
+                <button id="darkModeToggle" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300">
+                    <span id="darkModeIcon">☀️</span> 
+                </button>
+                <div id="settingsMenuContainer" class="relative">
+                    <button id="settingsBtn" class="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors duration-300">
+                        <span>⚙️</span>
+                    </button>
+                    <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-20 border dark:border-gray-600">
+                        <a href="#" id="helpLink" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">Ayuda</a>
+                        <a href="#" id="contactLink" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">Contacto</a>
+                        <a href="quienes_somos.html" id="aboutLink" class="block px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600">Quiénes somos</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <div class="bg-blue-500 text-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
+                <span id="totalIncomeLabel" class="text-lg font-semibold">Ingresos Totales</span>
+                <span id="totalIncome" class="text-3xl font-bold mt-2">0.00</span>
+            </div>
+            <div class="bg-red-500 text-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
+                <span id="totalExpensesLabel" class="text-lg font-semibold">Gastos Totales</span>
+                <span id="totalExpenses" class="text-3xl font-bold mt-2">0.00</span>
+            </div>
+            <div class="bg-green-500 text-white p-6 rounded-lg shadow-md flex flex-col items-center justify-center">
+                <span id="balanceLabel" class="text-lg font-semibold">Saldo Actual</span>
+                <span id="balance" class="text-3xl font-bold mt-2">0.00</span>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h2 id="accountsTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">Mis Cuentas</h2>
+            <div id="accountsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </div>
+
+        <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-md mb-8">
+            <h3 id="addAccountTitle" class="font-semibold text-lg mb-2">Añadir Nueva Cuenta</h3>
+            <div class="flex gap-4">
+                <input type="text" id="newAccountName" placeholder="Nombre de la cuenta (Ej: Banco, Efectivo)" class="flex-grow p-2 border rounded-md dark:bg-gray-800 dark:border-gray-600">
+                <button onclick="addAccount()" id="addAccountBtn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300">
+                    + Añadir
+                </button>
+            </div>
+        </div>
+
+
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+             <div class="flex-grow grid grid-cols-1 sm:grid-cols-4 gap-4">
+                <select id="filterType" class="p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <option value="all" data-lang-key="filterTypeAll">Todo (Ingresos/Gastos)</option>
+                    <option value="income" data-lang-key="filterTypeIncome">Solo Ingresos</option>
+                    <option value="expense" data-lang-key="filterTypeExpense">Solo Gastos</option>
+                </select>
+                <select id="filterCategory" class="p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <option value="all" data-lang-key="filterCategoryAll">Todas las Categorías</option>
+                </select>
+                <select id="filterAccount" class="p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                    <option value="all">Todas las Cuentas</option>
+                    </select>
+                <input type="month" id="filterMonth" class="p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200" value="">
+            </div>
+             <div class="flex-shrink-0 flex gap-2 mt-4 sm:mt-0">
+                <button onclick="openTransferModal()" id="newTransferBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    ↔️ Hacer Transferencia
+                </button>
+                <button onclick="openTransactionModal()" id="newTransactionBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                    + Nueva Transacción
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-md mb-8 border border-gray-200 dark:border-gray-600">
+            <h2 id="transactionsListTitle" class="text-xl font-bold p-4 border-b border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-200">Mis Transacciones</h2>
+            <div id="transactionList" class="overflow-y-auto max-h-96">
+                </div>
+            <p id="noTransactionsMessage" class="text-gray-500 dark:text-gray-400 text-center py-4 hidden">No hay transacciones registradas aún. ¡Añade una para empezar!</p>
+        </div>
+
+
+        <div class="mb-8">
+            <h2 id="breakdownTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">Desglose Detallado por Categoría</h2>
+            <div class="bg-gray-50 dark:bg-gray-700 rounded-lg border border-gray-200 dark:border-gray-600 overflow-hidden">
+                <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-600">
+                    <thead class="bg-gray-100 dark:bg-gray-700">
+                        <tr>
+                            <th id="breakdownCategoryHeader" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Categoría</th>
+                            <th id="breakdownIncomeHeader" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Ingresos</th>
+                            <th id="breakdownExpensesHeader" scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Gastos</th>
+                            <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Neto</th>
+                        </tr>
+                    </thead>
+                    <tbody id="detailedBreakdownTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+                        </tbody>
+                </table>
+                 <p id="noDetailedBreakdownMessage" class="text-gray-500 dark:text-gray-400 text-center py-4 hidden">No hay datos para mostrar el desglose detallado.</p>
+            </div>
+        </div>
+
+
+        <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded-md mb-8 dark:bg-yellow-700 dark:border-yellow-600 dark:text-yellow-100" role="alert">
+            <h3 id="adviceTitle" class="font-bold text-lg mb-2">Consejos Financieros</h3>
+            <p id="adviceText">Aquí aparecerán consejos personalizados basados en tus hábitos de gasto.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div>
+                <h2 id="expensesChartTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">Gastos por Categoría</h2>
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-md flex items-center justify-center" style="height: 300px;">
+                    <canvas id="expensesChart"></canvas>
+                </div>
+            </div>
+            <div>
+                <h2 id="incomeVsExpensesChartTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">Ingresos vs. Gastos Mensuales</h2>
+                <div class="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-md flex items-center justify-center" style="height: 300px;">
+                    <canvas id="incomeVsExpensesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h2 id="budgetsTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">Presupuestos por Categoría</h2>
+            <div id="budgetsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h2 id="savingGoalsTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">Metas de Ahorro</h2>
+            <div id="savingGoalsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </div>
+
+        <div class="mb-8">
+            <h2 id="debtsTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-200 mb-4">Gestión de Deudas/Préstamos</h2>
+            <div id="debtsList" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div>
+        </div>
+
+        <div class="flex justify-end mt-8">
+            <button onclick="exportTransactionsToCSV()" id="exportTransactionsBtn" class="bg-gray-700 hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                📊 Exportar Transacciones (CSV)
+            </button>
+            <button onclick="generateRecurringTransactions()" id="generateRecurringBtn" class="ml-4 bg-teal-600 hover:bg-teal-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                🔄 Generar Recurrentes
+            </button>
+        </div>
+
+
+    </div>
+
+    <div id="transferModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="transferModalTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-100 mb-6 text-center">Realizar Transferencia</h2>
+            <form id="transferForm" class="grid grid-cols-1 gap-4">
+                <div>
+                    <label for="transferDescription" id="transferDescriptionLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</label>
+                    <input type="text" id="transferDescription" placeholder="Ej: Ahorros para vacaciones" required
+                           class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label for="transferAmount" id="transferAmountLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Monto</label>
+                    <input type="number" id="transferAmount" placeholder="0.00" step="0.01" required
+                           class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div>
+                    <label for="fromAccount" id="fromAccountLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Desde Cuenta</label>
+                    <select id="fromAccount" required class="mt-1 block w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600"></select>
+                </div>
+                <div>
+                    <label for="toAccount" id="toAccountLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Hacia Cuenta</label>
+                    <select id="toAccount" required class="mt-1 block w-full p-3 border rounded-md dark:bg-gray-700 dark:border-gray-600"></select>
+                </div>
+                <div>
+                    <label for="transferDate" id="transferDateLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha</label>
+                    <input type="date" id="transferDate" required
+                           class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-cyan-500 focus:border-cyan-500 dark:bg-gray-700 dark:border-gray-600">
+                </div>
+                <div class="flex justify-end gap-4 mt-6">
+                    <button type="button" onclick="closeTransferModal()" id="cancelTransferBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg dark:bg-gray-600 dark:hover:bg-gray-500">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="saveTransferBtn" class="bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-6 rounded-lg">
+                        Guardar Transferencia
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+    <div id="transactionModal" class="modal-overlay hidden">
+        <div class="modal-content">
+            <h2 id="modalTitle" class="text-2xl font-bold text-gray-700 dark:text-gray-100 mb-6 text-center">Añadir Nueva Transacción</h2>
+            <form id="transactionForm" class="grid grid-cols-1 gap-4">
+                <input type="hidden" id="transactionId">
+                <div>
+                    <label for="description" id="descriptionLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Descripción</label>
+                    <input type="text" id="description" data-lang-key="descriptionPlaceholder" placeholder="Descripción de la transacción" required
+                           class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                </div>
+                <div>
+                    <label for="amount" id="amountLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Monto</label>
+                    <input type="number" id="amount" data-lang-key="amountPlaceholder" placeholder="Monto de la transacción" step="0.01" required
+                           class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                </div>
+                <div>
+                    <label for="type" id="typeLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Tipo</label>
+                    <select id="type" required
+                            class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        <option value="income" data-lang-key="incomeOption">Ingreso</option>
+                        <option value="expense" data-lang-key="expenseOption">Gasto</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="category" id="categoryLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Categoría</label>
+                    <select id="category"
+                            class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        </select>
+                </div>
+                <div>
+                    <label for="account" id="accountLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Cuenta</label>
+                    <select id="account" required
+                            class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                        </select>
+                </div>
+                <div>
+                    <label for="date" id="dateLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Fecha</label>
+                    <input type="date" id="date" required
+                           class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                </div>
+                <div class="flex items-center mt-2">
+                    <input type="checkbox" id="isRecurring" class="h-4 w-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500 dark:bg-gray-700 dark:border-gray-600">
+                    <label for="isRecurring" id="isRecurringLabel" class="ml-2 block text-sm text-gray-900 dark:text-gray-200">¿Es recurrente?</label>
+                </div>
+                <div id="recurringOptions" class="hidden grid grid-cols-1 gap-2 mt-2">
+                    <div>
+                        <label for="recurringFrequency" id="recurringFrequencyLabel" class="block text-sm font-medium text-gray-700 dark:text-gray-300">Frecuencia</label>
+                        <select id="recurringFrequency" class="mt-1 block w-full p-3 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200">
+                            <option value="monthly" data-lang-key="freqMonthly">Mensual</option>
+                            <option value="weekly" data-lang-key="freqWeekly">Semanal</option>
+                            <option value="bi-weekly" data-lang-key="freqBiWeekly">Quincenal</option>
+                            <option value="yearly" data-lang-key="freqYearly">Anual</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex justify-end gap-4 mt-6">
+                    <button type="button" onclick="closeTransactionModal()" id="cancelBtn" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-3 px-6 rounded-lg transition duration-300 ease-in-out dark:bg-gray-600 dark:hover:bg-gray-500 dark:text-gray-100">
+                        Cancelar
+                    </button>
+                    <button type="submit" id="saveTransactionBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition duration-300 ease-in-out transform hover:scale-105">
+                        Guardar Transacción
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="messageBox" class="fixed bottom-6 right-6 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-2000 hidden transition-opacity duration-300 ease-in-out opacity-0">
+        <p id="messageText"></p>
+    </div>
+
+
+    <script>
+        let accounts = JSON.parse(localStorage.getItem('accounts')) || [
+            { id: 'default', name: 'General' }
+        ];
+
+        let transactions = JSON.parse(localStorage.getItem('transactions')) || [];
+        transactions = transactions.map(t => {
+            if (!t.accountId && t.type !== 'transfer') {
+                t.accountId = 'default';
+            }
+            return t;
+        });
+
+        localStorage.setItem('transactions', JSON.stringify(transactions));
+
+        let categories = JSON.parse(localStorage.getItem('categories')) || [
+            'Alimentación', 'Transporte', 'Vivienda', 'Servicios', 'Entretenimiento',
+            'Salud', 'Educación', 'Compras', 'Trabajo', 'Regalos', 'Otros'
+        ];
+        let budgets = JSON.parse(localStorage.getItem('budgets')) || {};
+        let savingGoals = JSON.parse(localStorage.getItem('savingGoals')) || [];
+        let debts = JSON.parse(localStorage.getItem('debts')) || [];
+
+        let expensesChartInstance = null;
+        let incomeVsExpensesChartInstance = null;
+
+        const htmlElement = document.documentElement;
+
+        const languages = {
+            es: {
+                appTitle: "Control Financiero Personal",
+                mainTitle: "Control Financiero Personal",
+                totalIncomeLabel: "Ingresos Totales",
+                totalExpensesLabel: "Gastos Totales",
+                balanceLabel: "Saldo Actual",
+                filterTypeAll: "Todo (Ingresos/Gastos)",
+                filterTypeIncome: "Solo Ingresos",
+                filterTypeExpense: "Solo Gastos",
+                filterCategoryAll: "Todas las Categorías",
+                newTransactionBtn: "+ Nueva Transacción",
+                transactionsListTitle: "Mis Transacciones",
+                noTransactionsMessage: "No hay transacciones registradas aún. ¡Añade una para empezar!",
+                breakdownTitle: "Desglose Detallado por Categoría",
+                breakdownCategoryHeader: "Categoría",
+                breakdownIncomeHeader: "Ingresos",
+                breakdownExpensesHeader: "Gastos",
+                breakdownNetHeader: "Neto",
+                noDetailedBreakdownMessage: "No hay datos para mostrar el desglose detallado.",
+                adviceTitle: "Consejos Financieros",
+                initialAdvice: "Aquí aparecerán consejos personalizados basados en tus hábitos de gasto.",
+                adviceHighExpenses: "¡Cuidado! Tus gastos este mes están consumiendo una gran parte de tus ingresos. Considera revisar tus categorías de gasto más grandes.",
+                adviceMediumExpenses: "Este mes estás gastando más del 50% de tus ingresos. Identifica áreas donde puedas reducir y enfócate en el ahorro.",
+                adviceNoIncome: "Este mes tienes gastos registrados pero no ingresos. ¡Planifica tus ingresos para equilibrar tus finanzas!",
+                adviceGood: "¡Excelente trabajo! Tus gastos están bajo control este mes. Sigue así y considera establecer metas de ahorro.",
+                expensesChartTitle: "Gastos por Categoría",
+                incomeVsExpensesChartTitle: "Ingresos vs. Gastos Mensuales",
+                budgetsTitle: "Presupuestos por Categoría",
+                newCategoryPlaceholder: "Nueva Categoría",
+                newBudgetAmountPlaceholder: "Monto Presupuesto",
+                addBudgetBtn: "Añadir Presupuesto",
+                budgetLabel: "Presupuesto",
+                spentThisMonth: "Gastado este mes",
+                remaining: "Restante",
+                deleteBtn: "Eliminar",
+                savingGoalsTitle: "Metas de Ahorro",
+                newGoalNamePlaceholder: "Nombre de la Meta",
+                newGoalTargetPlaceholder: "Monto Objetivo",
+                addGoalBtn: "Añadir Meta",
+                goalObjective: "Objetivo",
+                goalSaved: "Ahorrado",
+                goalMissing: "Falta",
+                addFundsBtn: "Añadir Fondos",
+                debtsTitle: "Gestión de Deudas/Préstamos",
+                newDebtNamePlaceholder: "Nombre de la Deuda",
+                newDebtOriginalAmountPlaceholder: "Monto Original",
+                newDebtCurrentBalancePlaceholder: "Saldo Actual",
+                addDebtBtn: "Añadir Deuda",
+                debtOriginalAmount: "Monto Original",
+                debtCurrentBalance: "Saldo Actual",
+                recordPaymentBtn: "Registrar Pago",
+                exportTransactionsBtn: "📊 Exportar Transacciones (CSV)",
+                generateRecurringBtn: "🔄 Generar Recurrentes",
+                modalAddTransactionTitle: "Añadir Nueva Transacción",
+                modalEditTransactionTitle: "Editar Transacción",
+                descriptionLabel: "Descripción",
+                descriptionPlaceholder: "Descripción de la transacción",
+                amountLabel: "Monto",
+                amountPlaceholder: "Monto de la transacción",
+                typeLabel: "Tipo",
+                incomeOption: "Ingreso",
+                expenseOption: "Gasto",
+                categoryLabel: "Categoría",
+                dateLabel: "Fecha",
+                isRecurringLabel: "¿Es recurrente?",
+                recurringFrequencyLabel: "Frecuencia",
+                freqMonthly: "Mensual",
+                freqWeekly: "Semanal",
+                freqBiWeekly: "Quincenal",
+                freqYearly: "Anual",
+                cancelBtn: "Cancelar",
+                saveTransactionBtn: "Guardar Transacción",
+                msgCompleteFields: "Por favor, completa todos los campos correctamente y asegúrate que el monto sea positivo.",
+                msgTransactionUpdated: "Transacción actualizada con éxito!",
+                msgTransactionAdded: "Transacción añadida con éxito!",
+                msgDeleteTransactionConfirm: "¿Estás seguro de que quieres eliminar esta transacción?",
+                msgTransactionDeleted: "Transacción eliminada con éxito!",
+                msgNoTransactionsToExport: "No hay transacciones para exportar.",
+                msgTransactionsExported: "Transacciones exportadas a CSV.",
+                msgBudgetAdded: (category) => `Presupuesto de "${category}" añadido con éxito!`,
+                msgBudgetExists: "Ya existe un presupuesto para esta categoría. Si quieres modificarlo, elimínalo y vuelve a añadirlo.",
+                msgDeleteBudgetConfirm: (category) => `¿Estás seguro de que quieres eliminar el presupuesto para la categoría "${category}"?`,
+                msgBudgetDeleted: (category) => `Presupuesto de "${category}" eliminado.`,
+                msgGoalNameMissing: "Por favor, ingresa un nombre para la meta.",
+                msgGoalAmountInvalid: "Por favor, ingresa un monto objetivo válido y positivo.",
+                msgGoalAdded: (name) => `Meta "${name}" añadida con éxito!`,
+                msgAddFundsAmountInvalid: "Por favor, ingresa un monto válido y positivo.",
+                msgGoalReached: "¡Felicidades! Has alcanzado tu meta de ahorro.",
+                msgFundsAdded: "Fondos añadidos a la meta.",
+                msgDeleteGoalConfirm: "¿Estás seguro de que quieres eliminar esta meta de ahorro?",
+                msgGoalDeleted: "Meta de ahorro eliminada.",
+                msgDebtNameMissing: "Por favor, ingresa un nombre para la deuda.",
+                msgDebtOriginalAmountInvalid: "Por favor, ingresa un monto original válido y positivo.",
+                msgDebtCurrentBalanceInvalid: "Por favor, ingresa un saldo actual válido y no negativo.",
+                msgDebtBalanceGreaterThanOriginal: "El saldo actual no puede ser mayor que el monto original.",
+                msgDebtAdded: (name) => `Deuda "${name}" añadida con éxito!`,
+                msgPaymentAmountInvalid: "Por favor, ingresa un monto válido y positivo para el pago.",
+                msgDebtPaidOff: "¡Felicidades! Esta deuda ha sido saldada.",
+                msgPaymentRecorded: "Pago registrado a la deuda.",
+                msgDeleteDebtConfirm: "¿Estás seguro de que quieres eliminar esta deuda?",
+                msgDebtDeleted: "Deuda eliminada.",
+                msgRecurringGenerated: (count, month) => `${count} transacción(es) recurrente(s) generada(s) para ${month}.`,
+                msgNoRecurringFound: "No se encontraron transacciones recurrentes para generar este mes o ya existen.",
+
+                categoryOther: "Otros",
+                recurringText: "Recurrente",
+                noCategory: "Sin Categoría",
+                chartExpensesLabel: "Gastos",
+                chartIncomeLabel: "Ingresos",
+                chartAxisAmount: "Monto",
+                chartAxisMonth: "Mes",
+                editIcon: "✏️",
+                deleteIcon: "🗑️",
+                helpLink: "Ayuda",
+                contactLink: "Contacto",
+                aboutLink: "Quiénes somos",
+                newTransferBtn: "↔️ Hacer Transferencia",
+                transferModalTitle: "Realizar Transferencia",
+                transferDescriptionLabel: "Descripción",
+                transferAmountLabel: "Monto",
+                fromAccountLabel: "Desde Cuenta",
+                toAccountLabel: "Hacia Cuenta",
+                transferDateLabel: "Fecha",
+                saveTransferBtn: "Guardar Transferencia",
+                msgTransferAdded: "Transferencia realizada con éxito.",
+                msgSameAccountError: "La cuenta de origen y destino no pueden ser la misma."
+            },
+            en: {
+                appTitle: "Personal Finance Tracker",
+                mainTitle: "Personal Finance Tracker",
+                totalIncomeLabel: "Total Income",
+                totalExpensesLabel: "Total Expenses",
+                balanceLabel: "Current Balance",
+                filterTypeAll: "All (Income/Expenses)",
+                filterTypeIncome: "Only Income",
+                filterTypeExpense: "Only Expenses",
+                filterCategoryAll: "All Categories",
+                newTransactionBtn: "+ New Transaction",
+                transactionsListTitle: "My Transactions",
+                noTransactionsMessage: "No transactions recorded yet. Add one to get started!",
+                breakdownTitle: "Detailed Breakdown by Category",
+                breakdownCategoryHeader: "Category",
+                breakdownIncomeHeader: "Income",
+                breakdownExpensesHeader: "Expenses",
+                breakdownNetHeader: "Net",
+                noDetailedBreakdownMessage: "No data to show detailed breakdown.",
+                adviceTitle: "Financial Tips",
+                initialAdvice: "Personalized financial tips will appear here based on your spending habits.",
+                adviceHighExpenses: "Caution! Your expenses this month are consuming a large portion of your income. Consider reviewing your largest spending categories.",
+                adviceMediumExpenses: "You are spending more than 50% of your income this month. Identify areas where you can cut back and focus on saving.",
+                adviceNoIncome: "You have recorded expenses but no income this month. Plan your income to balance your finances!",
+                adviceGood: "Excellent work! Your expenses are under control this month. Keep it up and consider setting saving goals.",
+                expensesChartTitle: "Expenses by Category",
+                incomeVsExpensesChartTitle: "Monthly Income vs. Expenses",
+                budgetsTitle: "Budgets by Category",
+                newCategoryPlaceholder: "New Category",
+                newBudgetAmountPlaceholder: "Budget Amount",
+                addBudgetBtn: "Add Budget",
+                budgetLabel: "Budget",
+                spentThisMonth: "Spent this month",
+                remaining: "Remaining",
+                deleteBtn: "Delete",
+                savingGoalsTitle: "Saving Goals",
+                newGoalNamePlaceholder: "Goal Name",
+                newGoalTargetPlaceholder: "Target Amount",
+                addGoalBtn: "Add Goal",
+                goalObjective: "Objective",
+                goalSaved: "Saved",
+                goalMissing: "Missing",
+                addFundsBtn: "Add Funds",
+                debtsTitle: "Debt/Loan Management",
+                newDebtNamePlaceholder: "Debt Name",
+                newDebtOriginalAmountPlaceholder: "Original Amount",
+                newDebtCurrentBalancePlaceholder: "Current Balance",
+                addDebtBtn: "Add Debt",
+                debtOriginalAmount: "Original Amount",
+                debtCurrentBalance: "Current Balance",
+                recordPaymentBtn: "Record Payment",
+                exportTransactionsBtn: "📊 Export Transactions (CSV)",
+                generateRecurringBtn: "🔄 Generate Recurring",
+                modalAddTransactionTitle: "Add New Transaction",
+                modalEditTransactionTitle: "Edit Transaction",
+                descriptionLabel: "Description",
+                descriptionPlaceholder: "Transaction description",
+                amountLabel: "Amount",
+                amountPlaceholder: "Transaction amount",
+                typeLabel: "Type",
+                incomeOption: "Income",
+                expenseOption: "Expense",
+                categoryLabel: "Category",
+                dateLabel: "Date",
+                isRecurringLabel: "Is recurring?",
+                recurringFrequencyLabel: "Frequency",
+                freqMonthly: "Monthly",
+                freqWeekly: "Weekly",
+                freqBiWeekly: "Bi-Weekly",
+                freqYearly: "Yearly",
+                cancelBtn: "Cancel",
+                saveTransactionBtn: "Save Transaction",
+                msgCompleteFields: "Please fill in all fields correctly and ensure the amount is positive.",
+                msgTransactionUpdated: "Transaction updated successfully!",
+                msgTransactionAdded: "Transaction added successfully!",
+                msgDeleteTransactionConfirm: "Are you sure you want to delete this transaction?",
+                msgTransactionDeleted: "Transaction deleted successfully!",
+                msgNoTransactionsToExport: "No transactions to export.",
+                msgTransactionsExported: "Transactions exported to CSV.",
+                msgBudgetAdded: (category) => `Budget for "${category}" added successfully!`,
+                msgBudgetExists: "A budget for this category already exists. If you want to modify it, please delete and re-add it.",
+                msgDeleteBudgetConfirm: (category) => `Are you sure you want to delete the budget for category "${category}"?`,
+                msgBudgetDeleted: (category) => `Budget for "${category}" deleted.`,
+                msgGoalNameMissing: "Please enter a name for the goal.",
+                msgGoalAmountInvalid: "Please enter a valid and positive target amount.",
+                msgGoalAdded: (name) => `Goal "${name}" added successfully!`,
+                msgAddFundsAmountInvalid: "Please enter a valid and positive amount.",
+                msgGoalReached: "Congratulations! You have reached your saving goal.",
+                msgFundsAdded: "Funds added to goal.",
+                msgDeleteGoalConfirm: "Are you sure you want to delete this saving goal?",
+                msgGoalDeleted: "Saving goal deleted.",
+
+                msgDebtNameMissing: "Please enter a name for the debt.",
+                msgDebtOriginalAmountInvalid: "Please enter a valid and positive original amount.",
+                msgDebtCurrentBalanceInvalid: "Please enter a valid and non-negative current balance.",
+                msgDebtBalanceGreaterThanOriginal: "Current balance cannot be greater than the original amount.",
+                msgDebtAdded: (name) => `Debt "${name}" added successfully!`,
+                msgPaymentAmountInvalid: "Please enter a valid and positive amount for the payment.",
+                msgDebtPaidOff: "Congratulations! This debt has been paid off.",
+                msgPaymentRecorded: "Payment recorded for the debt.",
+                msgDeleteDebtConfirm: "Are you sure you want to delete this debt?",
+                msgDebtDeleted: "Debt deleted.",
+                msgRecurringGenerated: (count, month) => `${count} recurring transaction(s) generated for ${month}.`,
+                msgNoRecurringFound: "No recurring transactions found to generate for this month or they already exist.",
+                categoryOther: "Other",
+                recurringText: "Recurring",
+                noCategory: "No Category",
+                chartExpensesLabel: "Expenses",
+                chartIncomeLabel: "Income",
+                chartAxisAmount: "Amount",
+                chartAxisMonth: "Month",
+                editIcon: "✏️",
+                deleteIcon: "🗑️",
+                helpLink: "Help",
+                contactLink: "Contact",
+                aboutLink: "About Us",
+                newTransferBtn: "↔️ Make Transfer",
+                transferModalTitle: "Make Transfer",
+                transferDescriptionLabel: "Description",
+                transferAmountLabel: "Amount",
+                fromAccountLabel: "From Account",
+                toAccountLabel: "To Account",
+                transferDateLabel: "Date",
+                saveTransferBtn: "Save Transfer",
+                msgTransferAdded: "Transfer made successfully.",
+                msgSameAccountError: "Source and destination accounts cannot be the same."
+            }
+        };
+
+        let currentLanguage = localStorage.getItem('language') || 'es';
+
+        function updateTexts() {
+            const lang = languages[currentLanguage];
+
+            document.getElementById('appTitle').innerText = lang.appTitle;
+            document.getElementById('mainTitle').innerText = lang.mainTitle;
+            document.getElementById('totalIncomeLabel').innerText = lang.totalIncomeLabel;
+            document.getElementById('totalExpensesLabel').innerText = lang.totalExpensesLabel;
+            document.getElementById('balanceLabel').innerText = lang.balanceLabel;
+            document.querySelector('#filterType option[value="all"]').innerText = lang.filterTypeAll;
+            document.querySelector('#filterType option[value="income"]').innerText = lang.filterTypeIncome;
+            document.querySelector('#filterType option[value="expense"]').innerText = lang.filterTypeExpense;
+            document.querySelector('#filterCategory option[value="all"]').innerText = lang.filterCategoryAll;
+            document.getElementById('newTransactionBtn').innerText = lang.newTransactionBtn;
+            document.getElementById('transactionsListTitle').innerText = lang.transactionsListTitle;
+            document.getElementById('noTransactionsMessage').innerText = lang.noTransactionsMessage;
+            document.getElementById('breakdownTitle').innerText = lang.breakdownTitle;
+            document.getElementById('breakdownCategoryHeader').innerText = lang.breakdownCategoryHeader;
+            document.getElementById('breakdownIncomeHeader').innerText = lang.breakdownIncomeHeader;
+            document.getElementById('breakdownExpensesHeader').innerText = lang.breakdownExpensesHeader;
+            document.getElementById('breakdownNetHeader').innerText = lang.breakdownNetHeader;
+            document.getElementById('noDetailedBreakdownMessage').innerText = lang.noDetailedBreakdownMessage;
+            document.getElementById('adviceTitle').innerText = lang.adviceTitle;
+            document.getElementById('expensesChartTitle').innerText = lang.expensesChartTitle;
+            document.getElementById('incomeVsExpensesChartTitle').innerText = lang.incomeVsExpensesChartTitle;
+            document.getElementById('budgetsTitle').innerText = lang.budgetsTitle;
+            document.getElementById('newCategoryInput').placeholder = lang.newCategoryPlaceholder;
+            document.getElementById('newBudgetAmountInput').placeholder = lang.newBudgetAmountPlaceholder;
+            document.getElementById('addBudgetBtn').innerText = lang.addBudgetBtn;
+            document.getElementById('savingGoalsTitle').innerText = lang.savingGoalsTitle;
+            document.getElementById('newGoalNameInput').placeholder = lang.newGoalNamePlaceholder;
+            document.getElementById('newGoalTargetInput').placeholder = lang.newGoalTargetPlaceholder;
+            document.getElementById('addGoalBtn').innerText = lang.addGoalBtn;
+            document.getElementById('debtsTitle').innerText = lang.debtsTitle;
+            document.getElementById('newDebtNameInput').placeholder = lang.newDebtNamePlaceholder;
+            document.getElementById('newDebtOriginalAmountInput').placeholder = lang.newDebtOriginalAmountPlaceholder;
+            document.getElementById('newDebtCurrentBalanceInput').placeholder = lang.newDebtCurrentBalancePlaceholder;
+            document.getElementById('addDebtBtn').innerText = lang.addDebtBtn;
+            document.getElementById('exportTransactionsBtn').innerText = lang.exportTransactionsBtn;
+            document.getElementById('generateRecurringBtn').innerText = lang.generateRecurringBtn;
+            document.getElementById('descriptionLabel').innerText = lang.descriptionLabel;
+            document.getElementById('description').placeholder = lang.descriptionPlaceholder;
+            document.getElementById('amountLabel').innerText = lang.amountLabel;
+            document.getElementById('amount').placeholder = lang.amountPlaceholder;
+            document.getElementById('typeLabel').innerText = lang.typeLabel;
+            document.querySelector('#type option[value="income"]').innerText = lang.incomeOption;
+            document.querySelector('#type option[value="expense"]').innerText = lang.expenseOption;
+            document.getElementById('categoryLabel').innerText = lang.categoryLabel;
+            document.getElementById('dateLabel').innerText = lang.dateLabel;
+            document.getElementById('isRecurringLabel').innerText = lang.isRecurringLabel;
+            document.getElementById('recurringFrequencyLabel').innerText = lang.recurringFrequencyLabel;
+            document.querySelector('#recurringFrequency option[value="monthly"]').innerText = lang.freqMonthly;
+            document.querySelector('#recurringFrequency option[value="weekly"]').innerText = lang.freqWeekly;
+            document.querySelector('#recurringFrequency option[value="bi-weekly"]').innerText = lang.freqBiWeekly;
+            document.querySelector('#recurringFrequency option[value="yearly"]').innerText = lang.freqYearly;
+            document.getElementById('cancelBtn').innerText = lang.cancelBtn;
+            document.getElementById('saveTransactionBtn').innerText = lang.saveTransactionBtn;
+            document.getElementById('newTransferBtn').innerText = lang.newTransferBtn;
+            document.getElementById('transferModalTitle').innerText = lang.transferModalTitle;
+            document.getElementById('transferDescriptionLabel').innerText = lang.transferDescriptionLabel;
+            document.getElementById('transferAmountLabel').innerText = lang.transferAmountLabel;
+            document.getElementById('fromAccountLabel').innerText = lang.fromAccountLabel;
+            document.getElementById('toAccountLabel').innerText = lang.toAccountLabel;
+            document.getElementById('transferDateLabel').innerText = lang.transferDateLabel;
+            document.getElementById('saveTransferBtn').innerText = lang.saveTransferBtn;
+            document.getElementById('cancelTransferBtn').innerText = lang.cancelBtn;
+
+
+            populateCategorySelect(document.getElementById('filterCategory'));
+            populateCategorySelect(document.getElementById('category'));
+            const filterCategorySelect = document.getElementById('filterCategory');
+            filterCategorySelect.querySelector('option[value="all"]').innerText = lang.filterCategoryAll;
+            document.getElementById('languageSelect').value = currentLanguage;
+            document.getElementById('helpLink').innerText = lang.helpLink;
+            document.getElementById('contactLink').innerText = lang.contactLink;
+            document.getElementById('aboutLink').innerText = lang.aboutLink;
+        }
+
+        function showMessageBox(message, type = 'success') {
+            const messageBox = document.getElementById('messageBox');
+            const messageText = document.getElementById('messageText');
+
+            messageText.innerText = message;
+            messageBox.classList.remove('bg-green-500', 'bg-red-500');
+            messageBox.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
+            messageBox.classList.remove('hidden', 'opacity-0');
+            messageBox.classList.add('opacity-100');
+
+            setTimeout(() => {
+                messageBox.classList.remove('opacity-100');
+                messageBox.classList.add('opacity-0');
+                setTimeout(() => messageBox.classList.add('hidden'), 300);
+            }, 3000);
+        }
+
+        function formatCurrency(amount) {
+            return parseFloat(amount).toFixed(2);
+        }
+
+        function populateAccountSelect(selectElement) {
+            const currentValue = selectElement.value;
+            selectElement.innerHTML = '';
+            accounts.forEach(acc => {
+                const option = document.createElement('option');
+                option.value = acc.id;
+                option.innerText = acc.name;
+                selectElement.appendChild(option);
+            });
+            selectElement.value = currentValue;
+        }
+
+        function populateAccountFilter(selectElement) {
+            const currentValue = selectElement.value; 
+            selectElement.innerHTML = '<option value="all">Todas las Cuentas</option>'; 
+            accounts.forEach(acc => {
+                 const option = document.createElement('option');
+                option.value = acc.id;
+                option.innerText = acc.name;
+                selectElement.appendChild(option);
+            });
+            selectElement.value = currentValue; 
+        }
+
+        function openTransactionModal(transactionToEdit = null) {
+            const lang = languages[currentLanguage];
+            const modal = document.getElementById('transactionModal');
+            const form = document.getElementById('transactionForm');
+            const modalTitle = document.getElementById('modalTitle');
+            const accountSelect = document.getElementById('account');
+            populateAccountSelect(accountSelect);
+            populateCategorySelect(document.getElementById('category'));
+
+            if (transactionToEdit) {
+                modalTitle.innerText = lang.modalEditTransactionTitle;
+                form.transactionId.value = transactionToEdit.id;
+                form.description.value = transactionToEdit.description;
+                form.amount.value = transactionToEdit.amount;
+                form.type.value = transactionToEdit.type;
+                form.category.value = transactionToEdit.category || lang.categoryOther;
+                form.account.value = transactionToEdit.accountId || 'default';
+                form.date.value = transactionToEdit.date;
+                form.isRecurring.checked = transactionToEdit.isRecurring || false;
+                form.recurringFrequency.value = transactionToEdit.recurringFrequency || 'monthly';
+                document.getElementById('recurringOptions').classList.toggle('hidden', !form.isRecurring.checked);
+            } else {
+                modalTitle.innerText = lang.modalAddTransactionTitle;
+                form.reset();
+                form.transactionId.value = '';
+                form.date.value = new Date().toISOString().split('T')[0];
+                form.category.value = lang.categoryOther;
+                document.getElementById('recurringOptions').classList.add('hidden');
+            }
+            modal.classList.remove('hidden');
+        }
+
+        function closeTransactionModal() {
+            document.getElementById('transactionModal').classList.add('hidden');
+            document.getElementById('transactionForm').reset();
+        }
+
+        function saveTransaction(event) {
+            event.preventDefault();
+            const lang = languages[currentLanguage];
+            const form = event.target;
+            const transactionId = form.transactionId.value;
+            const description = form.description.value;
+            const amount = parseFloat(form.amount.value);
+            const type = form.type.value;
+            const category = form.category.value;
+            const accountId = form.account.value;
+            const date = form.date.value;
+            const isRecurring = form.isRecurring.checked;
+            const recurringFrequency = form.recurringFrequency.value;
+
+            if (!description || isNaN(amount) || amount <= 0 || !date) {
+                showMessageBox(lang.msgCompleteFields, 'error');
+                return;
+            }
+
+            if (transactionId) {
+                const index = transactions.findIndex(t => t.id === transactionId);
+                if (index !== -1) {
+                    transactions[index] = { ...transactions[index], description, amount, type, category, accountId, date, isRecurring, recurringFrequency };
+                    showMessageBox(lang.msgTransactionUpdated, 'success');
+                }
+            } else {
+                transactions.push({
+                    id: crypto.randomUUID(),
+                    description, amount, type, category, accountId, date, isRecurring,
+                    recurringFrequency: isRecurring ? recurringFrequency : null
+                });
+                showMessageBox(lang.msgTransactionAdded, 'success');
+            }
+
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            closeTransactionModal();
+            updateUI();
+        }
+
+        function openTransferModal() {
+            const modal = document.getElementById('transferModal');
+            const fromSelect = document.getElementById('fromAccount');
+            const toSelect = document.getElementById('toAccount');
+            
+            populateAccountSelect(fromSelect);
+            populateAccountSelect(toSelect);
+            
+            document.getElementById('transferDate').value = new Date().toISOString().split('T')[0];
+            modal.classList.remove('hidden');
+        }
+
+        function closeTransferModal() {
+            document.getElementById('transferModal').classList.add('hidden');
+            document.getElementById('transferForm').reset();
+        }
+
+        function saveTransfer(event) {
+            event.preventDefault();
+            const lang = languages[currentLanguage];
+
+            const description = document.getElementById('transferDescription').value;
+            const amount = parseFloat(document.getElementById('transferAmount').value);
+            const fromAccountId = document.getElementById('fromAccount').value;
+            const toAccountId = document.getElementById('toAccount').value;
+            const date = document.getElementById('transferDate').value;
+            
+            if (!description || isNaN(amount) || amount <= 0) {
+                showMessageBox(lang.msgCompleteFields, 'error');
+                return;
+            }
+            if (fromAccountId === toAccountId) {
+                showMessageBox(lang.msgSameAccountError, 'error');
+                return;
+            }
+
+            const newTransfer = {
+                id: crypto.randomUUID(),
+                type: 'transfer',
+                description: description,
+                amount: amount,
+                fromAccountId: fromAccountId,
+                toAccountId: toAccountId,
+                date: date
+            };
+
+            transactions.push(newTransfer);
+            localStorage.setItem('transactions', JSON.stringify(transactions));
+            showMessageBox(lang.msgTransferAdded, 'success');
+            closeTransferModal();
+            updateUI();
+        }
+
+
+        document.getElementById('isRecurring').addEventListener('change', (event) => {
+            document.getElementById('recurringOptions').classList.toggle('hidden', !event.target.checked);
+        });
+
+        function populateCategorySelect(selectElement) {
+            const lang = languages[currentLanguage];
+            const currentValue = selectElement.value;
+            selectElement.innerHTML = '';
+
+            if (selectElement.id === 'filterCategory') {
+                 const allOption = document.createElement('option');
+                 allOption.value = 'all';
+                 allOption.innerText = lang.filterCategoryAll;
+                 selectElement.appendChild(allOption);
+            }
+
+            categories.forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat;
+                option.innerText = cat;
+                selectElement.appendChild(option);
+            });
+
+            if (!categories.includes(lang.categoryOther)) {
+                const otherOption = document.createElement('option');
+                otherOption.value = lang.categoryOther;
+                otherOption.innerText = lang.categoryOther;
+                selectElement.appendChild(otherOption);
+            }
+            selectElement.value = currentValue;
+        }
+
+        function renderTransactionList() {
+            const lang = languages[currentLanguage];
+            const transactionListDiv = document.getElementById('transactionList');
+            const noTransactionsMessage = document.getElementById('noTransactionsMessage');
+            
+            const filterType = document.getElementById('filterType').value;
+            const filterCategory = document.getElementById('filterCategory').value;
+            const filterMonth = document.getElementById('filterMonth').value;
+            const filterAccount = document.getElementById('filterAccount').value; 
+
+            let filteredTransactions = transactions.filter(t => {
+                const transactionMonth = t.date ? t.date.substring(0, 7) : '';
+
+                if (filterType !== 'all' && t.type !== 'transfer' && t.type !== filterType) return false;
+                if (filterCategory !== 'all' && t.category !== filterCategory) return false;
+                if (filterMonth && transactionMonth !== filterMonth) return false;
+                
+                if (filterAccount !== 'all') {
+                    if(t.type === 'transfer') {
+                        if (t.fromAccountId !== filterAccount && t.toAccountId !== filterAccount) return false;
+                    } else {
+                         if (t.accountId !== filterAccount) return false;
+                    }
+                }
+
+                return true;
+            });
+
+
+            transactionListDiv.innerHTML = '';
+            noTransactionsMessage.classList.toggle('hidden', filteredTransactions.length > 0);
+
+            if (filteredTransactions.length > 0) {
+                filteredTransactions.sort((a, b) => new Date(b.date) - new Date(a.date));
+                filteredTransactions.forEach(transaction => {
+                    const transactionDiv = document.createElement('div');
+                    
+                    if (transaction.type === 'transfer') {
+                        const fromAccount = accounts.find(a => a.id === transaction.fromAccountId)?.name || 'N/A';
+                        const toAccount = accounts.find(a => a.id === transaction.toAccountId)?.name || 'N/A';
+                        transactionDiv.className = `flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0 dark:border-gray-700 bg-gray-100 dark:bg-gray-600`;
+                        transactionDiv.innerHTML = `
+                            <div class="flex items-center gap-3">
+                                <span class="text-xl">↔️</span>
+                                <div>
+                                    <p class="font-semibold text-gray-800 dark:text-gray-200">${transaction.description}</p>
+                                    <p class="text-sm text-gray-600 dark:text-gray-300">De: ${fromAccount} → Hacia: ${toAccount}</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="text-lg font-bold text-gray-700 dark:text-gray-300">
+                                    ${formatCurrency(transaction.amount)}
+                                </span>
+                                <button onclick="deleteTransaction('${transaction.id}')" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-md text-sm transition duration-200">${lang.deleteIcon}</button>
+                            </div>
+                        `;
+                    } else {
+                        transactionDiv.className = `flex justify-between items-center p-4 border-b border-gray-200 last:border-b-0 dark:border-gray-700 ${transaction.type === 'income' ? 'bg-blue-50 dark:bg-blue-900' : 'bg-red-50 dark:bg-red-900'}`;
+                        transactionDiv.innerHTML = `
+                            <div class="flex-grow">
+                                <p class="font-semibold text-gray-800 dark:text-gray-200">${transaction.description} <span class="text-xs text-gray-500 dark:text-gray-400">(${transaction.category || lang.noCategory})</span></p>
+                                <p class="text-sm text-gray-600 dark:text-gray-300">${new Date(transaction.date + 'T00:00:00').toLocaleDateString(currentLanguage === 'es' ? 'es-ES' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
+                                   ${transaction.isRecurring ? `<span class="ml-2 px-2 py-0.5 bg-gray-200 text-gray-700 rounded-full text-xs dark:bg-gray-600 dark:text-gray-200">${lang.recurringText}</span>` : ''}
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <span class="text-lg font-bold ${transaction.type === 'income' ? 'text-blue-700' : 'text-red-700'}">${transaction.type === 'income' ? '+' : '-'} ${formatCurrency(transaction.amount)}</span>
+                                <button onclick='openTransactionModal(${JSON.stringify(transaction).replace(/"/g, "&quot;")})' class="bg-yellow-500 hover:bg-yellow-600 text-white p-2 rounded-full shadow-md text-sm transition duration-200">${lang.editIcon}</button>
+                                <button onclick="deleteTransaction('${transaction.id}')" class="bg-red-500 hover:bg-red-600 text-white p-2 rounded-full shadow-md text-sm transition duration-200">${lang.deleteIcon}</button>
+                            </div>
+                        `;
+                    }
+                    transactionListDiv.appendChild(transactionDiv);
+                });
+            }
+        }
+
+        function deleteTransaction(id) {
+            const lang = languages[currentLanguage];
+            if (confirm(lang.msgDeleteTransactionConfirm)) {
+                transactions = transactions.filter(t => t.id !== id);
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                showMessageBox(lang.msgTransactionDeleted, 'success');
+                updateUI();
+            }
+        }
+
+        function updateSummary() {
+            const filterType = document.getElementById('filterType').value;
+            const filterCategory = document.getElementById('filterCategory').value;
+            const filterMonth = document.getElementById('filterMonth').value;
+            const filterAccount = document.getElementById('filterAccount').value;
+
+             let filteredTransactions = transactions.filter(t => {
+                const transactionMonth = t.date ? t.date.substring(0, 7) : '';
+                if (t.type === 'transfer') return false; 
+                if (filterType !== 'all' && t.type !== filterType) return false;
+                if (filterCategory !== 'all' && t.category !== filterCategory) return false;
+                if (filterMonth && transactionMonth !== filterMonth) return false;
+                if (filterAccount !== 'all' && t.accountId !== filterAccount) return false;
+                return true;
+            });
+
+            const income = filteredTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const expenses = filteredTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+            document.getElementById('totalIncome').innerText = formatCurrency(income);
+            document.getElementById('totalExpenses').innerText = formatCurrency(expenses);
+            document.getElementById('balance').innerText = formatCurrency(income - expenses);
+        }
+
+        function updateAdvice() {
+            const lang = languages[currentLanguage];
+            const filterMonth = document.getElementById('filterMonth').value;
+            const currentMonthTransactions = transactions.filter(t => t.type !== 'transfer' && t.date && t.date.substring(0, 7) === filterMonth);
+
+            if (currentMonthTransactions.length === 0) {
+                document.getElementById('adviceText').innerText = lang.initialAdvice;
+                return;
+            }
+
+            const totalIncome = currentMonthTransactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+            const totalExpenses = currentMonthTransactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+
+            if (totalIncome === 0 && totalExpenses > 0) {
+                document.getElementById('adviceText').innerText = lang.adviceNoIncome;
+            } else if (totalExpenses > totalIncome * 0.7) {
+                document.getElementById('adviceText').innerText = lang.adviceHighExpenses;
+            } else if (totalExpenses > totalIncome * 0.5) {
+                document.getElementById('adviceText').innerText = lang.adviceMediumExpenses;
+            } else {
+                document.getElementById('adviceText').innerText = lang.adviceGood;
+            }
+        }
+
+        function renderCharts() {
+            const lang = languages[currentLanguage];
+            if (expensesChartInstance) expensesChartInstance.destroy();
+            if (incomeVsExpensesChartInstance) incomeVsExpensesChartInstance.destroy();
+
+            const filterMonth = document.getElementById('filterMonth').value;
+            const transactionsForCharts = transactions.filter(t => t.date && t.date.substring(0, 7) === filterMonth);
+            const expenseData = transactionsForCharts.filter(t => t.type === 'expense');
+            const categoryExpenses = expenseData.reduce((acc, t) => {
+                acc[t.category || lang.noCategory] = (acc[t.category || lang.noCategory] || 0) + t.amount;
+                return acc;
+            }, {});
+
+            const expensesChartCtx = document.getElementById('expensesChart').getContext('2d');
+            expensesChartInstance = new Chart(expensesChartCtx, {
+                type: 'pie',
+                data: { labels: Object.keys(categoryExpenses), datasets: [{ data: Object.values(categoryExpenses), backgroundColor: ['#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40', '#F9E79F', '#A3E4D7', '#D7BDE2', '#FADBD8', '#BB8FCE'], hoverOffset: 4 }] },
+                options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right', labels: { color: htmlElement.classList.contains('dark') ? '#a0aec0' : '#4a5568' } } } }
+            });
+
+            const monthlyData = transactions.filter(t => t.type !== 'transfer').reduce((acc, t) => {
+                const monthYear = t.date ? t.date.substring(0, 7) : lang.noCategory;
+                if (!acc[monthYear]) acc[monthYear] = { income: 0, expenses: 0 };
+                if (t.type === 'income') acc[monthYear].income += t.amount; else acc[monthYear].expenses += t.amount;
+                return acc;
+            }, {});
+
+            const sortedMonths = Object.keys(monthlyData).sort();
+            const incomeVsExpensesChartCtx = document.getElementById('incomeVsExpensesChart').getContext('2d');
+            incomeVsExpensesChartInstance = new Chart(incomeVsExpensesChartCtx, {
+                type: 'bar',
+                data: {
+                    labels: sortedMonths,
+                    datasets: [
+                        { label: lang.chartIncomeLabel, data: sortedMonths.map(m => monthlyData[m].income), backgroundColor: 'rgba(75, 192, 192, 0.6)', borderColor: 'rgba(75, 192, 192, 1)', borderWidth: 1 },
+                        { label: lang.chartExpensesLabel, data: sortedMonths.map(m => monthlyData[m].expenses), backgroundColor: 'rgba(255, 99, 132, 0.6)', borderColor: 'rgba(255, 99, 132, 1)', borderWidth: 1 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { color: htmlElement.classList.contains('dark') ? '#a0aec0' : '#4a5568' }, grid: { color: htmlElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' } }, x: { ticks: { color: htmlElement.classList.contains('dark') ? '#a0aec0' : '#4a5568' }, grid: { color: htmlElement.classList.contains('dark') ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' } } }, plugins: { legend: { labels: { color: htmlElement.classList.contains('dark') ? '#a0aec0' : '#4a5568' } } } }
+            });
+        }
+
+        function renderDetailedBreakdown() {
+            const lang = languages[currentLanguage];
+            const tableBody = document.getElementById('detailedBreakdownTable');
+            const noDataMessage = document.getElementById('noDetailedBreakdownMessage');
+            tableBody.innerHTML = '';
+
+            const filterMonth = document.getElementById('filterMonth').value;
+            const filteredTransactions = transactions.filter(t => t.type !== 'transfer' && (!filterMonth || (t.date && t.date.substring(0, 7) === filterMonth)));
+
+            const breakdown = filteredTransactions.reduce((acc, t) => {
+                const category = t.category || lang.noCategory;
+                if (!acc[category]) acc[category] = { income: 0, expense: 0 };
+                if (t.type === 'income') acc[category].income += t.amount; else acc[category].expense += t.amount;
+                return acc;
+            }, {});
+
+            const sortedCategories = Object.keys(breakdown).sort();
+            noDataMessage.classList.toggle('hidden', sortedCategories.length > 0);
+
+            if (sortedCategories.length > 0) {
+                sortedCategories.forEach(cat => {
+                    const row = tableBody.insertRow();
+                    const net = breakdown[cat].income - breakdown[cat].expense;
+                    row.innerHTML = `<td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-200">${cat}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">${formatCurrency(breakdown[cat].income)}</td><td class="px-6 py-4 whitespace-nowrap text-sm text-red-600">${formatCurrency(breakdown[cat].expense)}</td><td class="px-6 py-4 whitespace-nowrap text-sm ${net >= 0 ? 'text-blue-700' : 'text-red-700'} font-semibold">${formatCurrency(net)}</td>`;
+                });
+            }
+        }
+        
+        function getAccountBalance(accountId) {
+            return transactions.reduce((balance, t) => {
+                if (t.type === 'transfer') {
+                    if (t.fromAccountId === accountId) return balance - t.amount;
+                    if (t.toAccountId === accountId) return balance + t.amount;
+                } else if (t.accountId === accountId) {
+                    if (t.type === 'income') return balance + t.amount;
+                    if (t.type === 'expense') return balance - t.amount;
+                }
+                return balance;
+            }, 0);
+        }
+        
+        function renderAccounts() {
+            const accountsListDiv = document.getElementById('accountsList');
+            accountsListDiv.innerHTML = '';
+        
+            accounts.forEach(account => {
+                const balance = getAccountBalance(account.id);
+                const accountCard = document.createElement('div');
+                accountCard.className = 'bg-white dark:bg-gray-800 p-4 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex justify-between items-center';
+                accountCard.innerHTML = `
+                    <div>
+                        <p class="font-bold text-gray-800 dark:text-gray-100">${account.name}</p>
+                        <p class="text-2xl font-semibold ${balance >= 0 ? 'text-green-500' : 'text-red-500'}">${formatCurrency(balance)}</p>
+                    </div>
+                    ${account.id !== 'default' ? `<button onclick="deleteAccount('${account.id}')" class="text-red-500 hover:text-red-700">🗑️</button>` : ''}
+                `;
+                accountsListDiv.appendChild(accountCard);
+            });
+        }
+        
+        function addAccount() {
+            const accountNameInput = document.getElementById('newAccountName');
+            const name = accountNameInput.value.trim();
+        
+            if (name) {
+                accounts.push({ id: crypto.randomUUID(), name });
+                localStorage.setItem('accounts', JSON.stringify(accounts));
+                accountNameInput.value = '';
+                updateUI();
+            }
+        }
+        
+        function deleteAccount(accountId) {
+            if (confirm('¿Estás seguro de que quieres eliminar esta cuenta? Las transacciones asociadas se moverán a la cuenta "General".')) {
+                transactions.forEach(t => {
+                    if (t.accountId === accountId) t.accountId = 'default';
+                });
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+        
+                accounts = accounts.filter(acc => acc.id !== accountId);
+                localStorage.setItem('accounts', JSON.stringify(accounts));
+                updateUI();
+            }
+        }
+
+        function renderBudgets() {
+            const lang = languages[currentLanguage];
+            const budgetsListDiv = document.getElementById('budgetsList');
+            budgetsListDiv.innerHTML = '';
+            const currentMonth = document.getElementById('filterMonth').value;
+
+            Object.keys(budgets).sort().forEach(category => {
+                const totalSpent = transactions.filter(t => t.category === category && t.type === 'expense' && t.date && t.date.substring(0, 7) === currentMonth).reduce((sum, t) => sum + t.amount, 0);
+                const remaining = budgets[category] - totalSpent;
+                const progress = (totalSpent / budgets[category]) * 100;
+                const progressBarColor = progress > 100 ? 'bg-red-500' : progress > 75 ? 'bg-orange-500' : 'bg-blue-500';
+
+                const budgetDiv = document.createElement('div');
+                budgetDiv.className = 'bg-blue-50 dark:bg-blue-900 p-4 rounded-lg shadow-md border border-blue-200 dark:border-blue-700';
+                budgetDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                         <h4 class="font-bold text-lg text-blue-800 dark:text-blue-100">${category}</h4>
+                         <button onclick="deleteBudgetCategory('${category}')" class="text-red-500 hover:text-red-700 text-xl"> &times; </button>
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${lang.budgetLabel}: <span class="font-semibold">${formatCurrency(budgets[category])}</span></p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${lang.spentThisMonth}: <span class="font-semibold">${formatCurrency(totalSpent)}</span></p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${lang.remaining}: <span class="font-bold ${remaining < 0 ? 'text-red-600' : 'text-green-600'}">${formatCurrency(remaining)}</span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2 dark:bg-gray-600"><div class="${progressBarColor} h-2.5 rounded-full" style="width: ${Math.min(100, progress)}%;"></div></div>
+                `;
+                budgetsListDiv.appendChild(budgetDiv);
+            });
+
+            const addBudgetDiv = document.createElement('div');
+            addBudgetDiv.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-md flex flex-col items-center justify-center border border-gray-200 dark:border-gray-600';
+            addBudgetDiv.innerHTML = `<input type="text" id="newCategoryInput" placeholder="${lang.newCategoryPlaceholder}" class="w-full p-2 border border-gray-300 rounded-md mb-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"><input type="number" id="newBudgetAmountInput" placeholder="${lang.newBudgetAmountPlaceholder}" step="0.01" class="w-full p-2 border border-gray-300 rounded-md mb-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"><button onclick="addBudgetCategory()" id="addBudgetBtn" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">${lang.addBudgetBtn}</button>`;
+            budgetsListDiv.appendChild(addBudgetDiv);
+        }
+
+        function addBudgetCategory() {
+            const lang = languages[currentLanguage];
+            const categoryName = document.getElementById('newCategoryInput').value.trim();
+            const budgetAmount = parseFloat(document.getElementById('newBudgetAmountInput').value);
+
+            if (!categoryName || isNaN(budgetAmount) || budgetAmount <= 0) {
+                showMessageBox(lang.msgCompleteFields, 'error');
+                return;
+            }
+            if (budgets[categoryName]) {
+                 showMessageBox(lang.msgBudgetExists, 'error');
+                 return;
+            }
+
+            if (!categories.includes(categoryName)) {
+                categories.push(categoryName);
+                localStorage.setItem('categories', JSON.stringify(categories));
+            }
+
+            budgets[categoryName] = budgetAmount;
+            localStorage.setItem('budgets', JSON.stringify(budgets));
+            showMessageBox(lang.msgBudgetAdded(categoryName), 'success');
+            document.getElementById('newCategoryInput').value = '';
+            document.getElementById('newBudgetAmountInput').value = '';
+            updateUI();
+        }
+
+        function deleteBudgetCategory(category) {
+            const lang = languages[currentLanguage];
+            if (confirm(lang.msgDeleteBudgetConfirm(category))) {
+                delete budgets[category];
+                localStorage.setItem('budgets', JSON.stringify(budgets));
+                showMessageBox(lang.msgBudgetDeleted(category), 'success');
+                updateUI();
+            }
+        }
+
+        function renderSavingGoals() {
+            const lang = languages[currentLanguage];
+            const savingGoalsListDiv = document.getElementById('savingGoalsList');
+            savingGoalsListDiv.innerHTML = '';
+
+            savingGoals.forEach(goal => {
+                const progress = (goal.savedAmount / goal.targetAmount) * 100;
+                const goalDiv = document.createElement('div');
+                goalDiv.className = 'bg-purple-50 dark:bg-purple-900 p-4 rounded-lg shadow-md border border-purple-200 dark:border-purple-700';
+                goalDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold text-lg text-purple-800 dark:text-purple-100">${goal.name}</h4>
+                        <button onclick="deleteSavingGoal('${goal.id}')" class="text-red-500 hover:text-red-700 text-xl">&times;</button>
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${lang.goalObjective}: <span class="font-semibold">${formatCurrency(goal.targetAmount)}</span></p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${lang.goalSaved}: <span class="font-semibold">${formatCurrency(goal.savedAmount)}</span></p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${lang.goalMissing}: <span class="font-bold">${formatCurrency(Math.max(0, goal.targetAmount - goal.savedAmount))}</span></p>
+                    <div class="w-full bg-gray-200 rounded-full h-2.5 mt-2 dark:bg-gray-600"><div class="${progress >= 100 ? 'bg-green-500' : 'bg-purple-500'} h-2.5 rounded-full" style="width: ${Math.min(100, progress)}%;"></div></div>
+                    <button onclick="addFundsToGoal('${goal.id}')" class="mt-3 w-full bg-purple-500 hover:bg-purple-600 text-white text-sm py-1 px-3 rounded-md transition duration-200">${lang.addFundsBtn}</button>
+                `;
+                savingGoalsListDiv.appendChild(goalDiv);
+            });
+
+            const addGoalDiv = document.createElement('div');
+            addGoalDiv.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-md flex flex-col items-center justify-center border border-gray-200 dark:border-gray-600';
+            addGoalDiv.innerHTML = `<input type="text" id="newGoalNameInput" placeholder="${lang.newGoalNamePlaceholder}" class="w-full p-2 border border-gray-300 rounded-md mb-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"><input type="number" id="newGoalTargetInput" placeholder="${lang.newGoalTargetPlaceholder}" step="0.01" class="w-full p-2 border border-gray-300 rounded-md mb-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"><button onclick="addSavingGoal()" id="addGoalBtn" class="w-full bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">${lang.addGoalBtn}</button>`;
+            savingGoalsListDiv.appendChild(addGoalDiv);
+        }
+
+        function addSavingGoal() {
+            const lang = languages[currentLanguage];
+            const name = document.getElementById('newGoalNameInput').value.trim();
+            const targetAmount = parseFloat(document.getElementById('newGoalTargetInput').value);
+
+            if (!name || isNaN(targetAmount) || targetAmount <= 0) {
+                showMessageBox(lang.msgGoalAmountInvalid, 'error');
+                return;
+            }
+
+            savingGoals.push({ id: crypto.randomUUID(), name, targetAmount, savedAmount: 0 });
+            localStorage.setItem('savingGoals', JSON.stringify(savingGoals));
+            showMessageBox(lang.msgGoalAdded(name), 'success');
+            document.getElementById('newGoalNameInput').value = '';
+            document.getElementById('newGoalTargetInput').value = '';
+            updateUI();
+        }
+
+        function addFundsToGoal(goalId) {
+            const lang = languages[currentLanguage];
+            const amountText = prompt(lang.msgAddFundsAmountInvalid.replace('Por favor, ingresa un monto válido y positivo.', '¿Cuánto dinero quieres añadir a esta meta de ahorro?'));
+            if (amountText === null) return;
+            const amount = parseFloat(amountText);
+
+            if (isNaN(amount) || amount <= 0) {
+                showMessageBox(lang.msgAddFundsAmountInvalid, 'error');
+                return;
+            }
+
+            const goal = savingGoals.find(g => g.id === goalId);
+            if (goal) {
+                goal.savedAmount += amount;
+                if (goal.savedAmount >= goal.targetAmount) {
+                     goal.savedAmount = goal.targetAmount;
+                     showMessageBox(lang.msgGoalReached, 'success');
+                } else {
+                    showMessageBox(lang.msgFundsAdded, 'success');
+                }
+                localStorage.setItem('savingGoals', JSON.stringify(savingGoals));
+                updateUI();
+            }
+        }
+
+        function deleteSavingGoal(goalId) {
+            const lang = languages[currentLanguage];
+            if (confirm(lang.msgDeleteGoalConfirm)) {
+                savingGoals = savingGoals.filter(g => g.id !== goalId);
+                localStorage.setItem('savingGoals', JSON.stringify(savingGoals));
+                showMessageBox(lang.msgGoalDeleted, 'success');
+                updateUI();
+            }
+        }
+
+        function renderDebts() {
+            const lang = languages[currentLanguage];
+            const debtsListDiv = document.getElementById('debtsList');
+            debtsListDiv.innerHTML = '';
+
+            debts.forEach(debt => {
+                const debtDiv = document.createElement('div');
+                debtDiv.className = 'bg-red-50 dark:bg-red-900 p-4 rounded-lg shadow-md border border-red-200 dark:border-red-700';
+                debtDiv.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <h4 class="font-bold text-lg text-red-800 dark:text-red-100">${debt.name}</h4>
+                        <button onclick="deleteDebt('${debt.id}')" class="text-red-500 hover:text-red-700 text-xl">&times;</button>
+                    </div>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${lang.debtOriginalAmount}: <span class="font-semibold">${formatCurrency(debt.originalAmount)}</span></p>
+                    <p class="text-sm text-gray-700 dark:text-gray-300">${lang.debtCurrentBalance}: <span class="font-semibold">${formatCurrency(debt.currentBalance)}</span></p>
+                    <button onclick="recordDebtPayment('${debt.id}')" class="mt-3 w-full bg-red-500 hover:bg-red-600 text-white text-sm py-1 px-3 rounded-md transition duration-200">${lang.recordPaymentBtn}</button>
+                `;
+                debtsListDiv.appendChild(debtDiv);
+            });
+
+            const addDebtDiv = document.createElement('div');
+            addDebtDiv.className = 'bg-gray-50 dark:bg-gray-700 p-4 rounded-lg shadow-md flex flex-col items-center justify-center border border-gray-200 dark:border-gray-600';
+            addDebtDiv.innerHTML = `<input type="text" id="newDebtNameInput" placeholder="${lang.newDebtNamePlaceholder}" class="w-full p-2 border border-gray-300 rounded-md mb-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"><input type="number" id="newDebtOriginalAmountInput" placeholder="${lang.newDebtOriginalAmountPlaceholder}" step="0.01" class="w-full p-2 border border-gray-300 rounded-md mb-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"><input type="number" id="newDebtCurrentBalanceInput" placeholder="${lang.newDebtCurrentBalancePlaceholder}" step="0.01" class="w-full p-2 border border-gray-300 rounded-md mb-2 dark:bg-gray-800 dark:border-gray-600 dark:text-gray-200"><button onclick="addDebt()" id="addDebtBtn" class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out">${lang.addDebtBtn}</button>`;
+            debtsListDiv.appendChild(addDebtDiv);
+        }
+
+        function addDebt() {
+            const lang = languages[currentLanguage];
+            const name = document.getElementById('newDebtNameInput').value.trim();
+            const originalAmount = parseFloat(document.getElementById('newDebtOriginalAmountInput').value);
+            const currentBalance = parseFloat(document.getElementById('newDebtCurrentBalanceInput').value);
+
+            if (!name || isNaN(originalAmount) || originalAmount <= 0 || isNaN(currentBalance) || currentBalance < 0 || currentBalance > originalAmount) {
+                showMessageBox(lang.msgDebtCurrentBalanceInvalid, 'error');
+                return;
+            }
+
+            debts.push({ id: crypto.randomUUID(), name, originalAmount, currentBalance });
+            localStorage.setItem('debts', JSON.stringify(debts));
+            showMessageBox(lang.msgDebtAdded(name), 'success');
+            document.getElementById('newDebtNameInput').value = '';
+            document.getElementById('newDebtOriginalAmountInput').value = '';
+            document.getElementById('newDebtCurrentBalanceInput').value = '';
+            updateUI();
+        }
+
+        function recordDebtPayment(debtId) {
+            const lang = languages[currentLanguage];
+            const amountText = prompt(lang.msgPaymentAmountInvalid.replace('Por favor, ingresa un monto válido y positivo para el pago.', '¿Cuánto dinero pagaste a esta deuda?'));
+            if (amountText === null) return;
+            const amount = parseFloat(amountText);
+            
+            if (isNaN(amount) || amount <= 0) {
+                showMessageBox(lang.msgPaymentAmountInvalid, 'error');
+                return;
+            }
+
+            const debt = debts.find(d => d.id === debtId);
+            if (debt) {
+                debt.currentBalance -= amount;
+                if (debt.currentBalance <= 0) {
+                    debt.currentBalance = 0;
+                    showMessageBox(lang.msgDebtPaidOff, 'success');
+                } else {
+                    showMessageBox(lang.msgPaymentRecorded, 'success');
+                }
+                localStorage.setItem('debts', JSON.stringify(debts));
+                updateUI();
+            }
+        }
+
+        function deleteDebt(debtId) {
+            const lang = languages[currentLanguage];
+            if (confirm(lang.msgDeleteDebtConfirm)) {
+                debts = debts.filter(d => d.id !== debtId);
+                localStorage.setItem('debts', JSON.stringify(debts));
+                showMessageBox(lang.msgDebtDeleted, 'success');
+                updateUI();
+            }
+        }
+        
+        function exportTransactionsToCSV() {
+            const lang = languages[currentLanguage];
+            if (transactions.length === 0) {
+                showMessageBox(lang.msgNoTransactionsToExport, 'error');
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "ID,Descripción,Monto,Tipo,Categoría,Cuenta,Fecha,Es Recurrente,Frecuencia Recurrente\n";
+
+            transactions.forEach(t => {
+                const accountName = accounts.find(a => a.id === t.accountId || a.id === t.fromAccountId)?.name || 'N/A';
+                const row = [ `"${t.id}"`, `"${t.description.replace(/"/g, '""')}"`, t.amount, t.type, `"${t.category || (t.type === 'transfer' ? 'Transferencia' : lang.noCategory)}"`, `"${accountName}"`, t.date, t.isRecurring ? 'Sí' : 'No', t.recurringFrequency || '' ].join(',');
+                csvContent += row + "\n";
+            });
+
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csvContent));
+            link.setAttribute("download", "transacciones.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showMessageBox(lang.msgTransactionsExported, 'success');
+        }
+
+        function generateRecurringTransactions() {
+            const lang = languages[currentLanguage];
+            const currentMonth = document.getElementById('filterMonth').value;
+            if (!currentMonth) {
+                showMessageBox("Por favor, selecciona un mes para generar las transacciones recurrentes.", 'error');
+                return;
+            }
+
+            let generatedCount = 0;
+            const recurringTemplates = transactions.filter(t => t.isRecurring);
+            
+            recurringTemplates.forEach(template => {
+                const alreadyExists = transactions.some(existingT =>
+                    !existingT.isRecurring &&
+                    existingT.description === template.description &&
+                    existingT.date && existingT.date.substring(0, 7) === currentMonth
+                );
+
+                if (!alreadyExists) {
+                    const templateDate = new Date(template.date + 'T00:00:00');
+                    const [year, month] = currentMonth.split('-').map(Number);
+                    const newDate = new Date(year, month - 1, templateDate.getDate()).toISOString().split('T')[0];
+
+                    if (newDate.substring(0, 7) === currentMonth) {
+                        transactions.push({
+                            id: crypto.randomUUID(),
+                            description: template.description,
+                            amount: template.amount,
+                            type: template.type,
+                            category: template.category,
+                            accountId: template.accountId,
+                            date: newDate,
+                            isRecurring: false,
+                            recurringFrequency: null
+                        });
+                        generatedCount++;
+                    }
+                }
+            });
+
+            if (generatedCount > 0) {
+                localStorage.setItem('transactions', JSON.stringify(transactions));
+                showMessageBox(lang.msgRecurringGenerated(generatedCount, currentMonth), 'success');
+                updateUI();
+            } else {
+                showMessageBox(lang.msgNoRecurringFound, 'info');
+            }
+        }
+
+        function updateUI() {
+            localStorage.setItem('darkMode', htmlElement.classList.contains('dark'));
+            updateSummary();
+            renderAccounts();
+            populateAccountFilter(document.getElementById('filterAccount'));
+            renderTransactionList();
+            renderDetailedBreakdown();
+            updateAdvice();
+            renderCharts();
+            renderBudgets();
+            renderSavingGoals();
+            renderDebts();
+            updateTexts();
+        }
+
+        document.getElementById('darkModeToggle').addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            const isDarkMode = htmlElement.classList.contains('dark');
+            document.getElementById('darkModeIcon').innerText = isDarkMode ? '🌙' : '☀️';
+            updateUI();
+        });
+
+        document.getElementById('transactionForm').addEventListener('submit', saveTransaction);
+        document.getElementById('transferForm').addEventListener('submit', saveTransfer);
+        document.getElementById('filterType').addEventListener('change', updateUI);
+        document.getElementById('filterCategory').addEventListener('change', updateUI);
+        document.getElementById('filterMonth').addEventListener('change', updateUI);
+        document.getElementById('filterAccount').addEventListener('change', updateUI);
+        document.getElementById('languageSelect').addEventListener('change', (event) => {
+            currentLanguage = event.target.value;
+            localStorage.setItem('language', currentLanguage);
+            updateUI();
+        });
+        const settingsBtn = document.getElementById('settingsBtn');
+        const settingsDropdown = document.getElementById('settingsDropdown');
+        const settingsMenuContainer = document.getElementById('settingsMenuContainer');
+
+        settingsBtn.addEventListener('click', (event) => {
+            event.stopPropagation(); 
+            settingsDropdown.classList.toggle('hidden');
+        });
+
+        window.addEventListener('click', (event) => {
+            if (!settingsMenuContainer.contains(event.target)) {
+                settingsDropdown.classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+            if (savedDarkMode) {
+                htmlElement.classList.add('dark');
+                document.getElementById('darkModeIcon').innerText = '🌙';
+            }
+
+            const today = new Date();
+            const year = today.getFullYear();
+            const month = (today.getMonth() + 1).toString().padStart(2, '0');
+            document.getElementById('filterMonth').value = `${year}-${month}`;
+
+            languageSelect.value = currentLanguage;
+            updateUI();
+        });
+
+    </script>
+</body>
+</html>
